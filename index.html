@@ -6,24 +6,99 @@
     <title>四叶幸运通行证</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;}
-        body{background:#1e1e1e;color:#d4d4d4;font-family:Microsoft Yahei,Consolas;padding:10px;}
-        .box{max-width:100%;margin:0 auto;background:#252526;border:1px solid #333;border-radius:12px;padding:15px;overflow-x:hidden;}
-        .title{color:#ff79c6;text-align:center;font-size:20px;font-weight:bold;margin-bottom:8px;}
-        .line{margin:10px 0;border-bottom:2px dashed #6a9955;}
-        .motto{color:#ff79c6;text-align:center;font-size:17px;font-weight:bold;margin:8px 0;}
-        .sel-wrap{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin:15px 0;}
-        .sel-item{display:flex;align-items:center;gap:6px;}
-        .sel-item span{color:#9cdcfe;font-size:15px;}
-        select{background:#333;color:#ff79c6;border:1px solid #555;border-radius:6px;padding:5px 8px;font-size:14px;}
-        .info-row{margin:6px 0;padding-left:10px;border-left:2px solid #333;}
-        .goods-item{margin:8px 0;padding:10px;background:#2c2c2c;border-radius:8px;word-break:break-all;}
-        .platform{color:#f92672;font-weight:bold;}
-        .type-online{color:#8be9fd;}
-        .type-offline{color:#ffb86c;}
-        .type-photo{color:#ff79c6;}
-        .goods-item a{color:#9cdcfe;text-decoration:none;}
-        .login-btn{text-align:center;margin:10px 0;}
-        .login-btn a{color:#ff79c6;text-decoration:none;border:1px solid #ff79c6;padding:6px 12px;border-radius:6px;}
+        /* 奶雾粉咖 配色定义 */
+        :root {
+            --color-dark: #968C83;    /* 咖色主色 */
+            --color-gray: #D6D2C4;    /* 浅米色 */
+            --color-light: #FFF5EA;   /* 奶杏色 */
+            --color-pink: #F7DAD9;    /* 奶雾粉色 */
+        }
+        body{
+            background: var(--color-light);
+            color: var(--color-dark);
+            font-family:Microsoft Yahei,Consolas;
+            padding:10px;
+        }
+        .box{
+            max-width:100%;
+            margin:0 auto;
+            background:#fff;
+            border:1px solid var(--color-gray);
+            border-radius:12px;
+            padding:15px;
+            overflow-x:hidden;
+        }
+        .title{
+            color: var(--color-dark);
+            text-align:center;
+            font-size:20px;
+            font-weight:bold;
+            margin-bottom:8px;
+        }
+        .line{
+            margin:10px 0;
+            border-bottom:2px dashed var(--color-pink);
+        }
+        .motto{
+            color: var(--color-pink);
+            text-align:center;
+            font-size:17px;
+            font-weight:bold;
+            margin:8px 0;
+        }
+        .sel-wrap{
+            display:flex;
+            flex-wrap:wrap;
+            gap:15px;
+            justify-content:center;
+            margin:15px 0;
+        }
+        .sel-item{
+            display:flex;
+            align-items:center;
+            gap:6px;
+        }
+        .sel-item span{
+            color: var(--color-dark);
+            font-size:15px;
+        }
+        select{
+            background: var(--color-light);
+            color: var(--color-dark);
+            border:1px solid var(--color-gray);
+            border-radius:6px;
+            padding:5px 8px;
+            font-size:14px;
+        }
+        .info-row{
+            margin:6px 0;
+            padding-left:10px;
+            border-left:2px solid var(--color-pink);
+        }
+        .goods-item{
+            margin:8px 0;
+            padding:10px;
+            background: var(--color-light);
+            border-radius:8px;
+            word-break:break-all;
+        }
+        .platform{
+            color: var(--color-dark);
+            font-weight:bold;
+        }
+        .type-online{
+            color: #7A9E9F; /* 柔和的浅蓝，适配整体温柔风格 */
+        }
+        .type-offline{
+            color: #D4A373; /* 暖棕，适配咖色调 */
+        }
+        .type-photo{
+            color: var(--color-pink);
+        }
+        .goods-item a{
+            color: var(--color-dark);
+            text-decoration:none;
+        }
 
         @media (max-width:600px){
             body{padding:5px;}
@@ -74,18 +149,14 @@
             </div>
         </div>
 
-        <div class="info-row"><span style="color:#4ec9b0;">✅ 面板状态：正常运行</span></div>
-        <div class="info-row"><span style="color:#9cdcfe;">🕒 自动刷新中</span></div>
+        <div class="info-row"><span style="color:#7A9E9F;">✅ 面板状态：正常运行</span></div>
+        <div class="info-row"><span style="color:var(--color-dark);">🕒 自动刷新中</span></div>
 
         <div class="line"></div>
-        <div style="text-align:center;color:#9cdcfe;">签售商品列表</div>
+        <div style="text-align:center;color:var(--color-dark);">签售商品列表</div>
         <div class="line"></div>
 
         <div id="list"></div>
-
-        <div class="login-btn">
-            <a href="login.html">管理员登录</a>
-        </div>
     </div>
 
     <script>
@@ -116,7 +187,7 @@
                 </div>
                 `;
             });
-            document.getElementById("list").innerHTML = html||"<div style='text-align:center;color:#888;'>暂无商品</div>";
+            document.getElementById("list").innerHTML = html||"<div style='text-align:center;color:var(--color-gray);'>暂无商品</div>";
         }
 
         document.getElementById("plat").onchange = render;
