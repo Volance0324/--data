@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>签售平台销量监控</title>
+    <title>四叶幸运通行证</title>
     <style>
         * {
             margin: 0;
@@ -28,7 +28,7 @@
         .select-wrap {
             margin-bottom: 15px;
             display: flex;
-            gap: 25px;
+            gap: 20px;
             flex-wrap: wrap;
         }
         select {
@@ -43,6 +43,13 @@
         .divider {
             color: #6a9955;
             margin: 8px 0;
+        }
+        .lucky-slogan {
+            color: #ff79c6;
+            text-align: center;
+            font-size: 16px;
+            margin-bottom: 12px;
+            font-weight: bold;
         }
         .status {
             color: #4ec9b0;
@@ -77,10 +84,9 @@
 <body>
     <div class="terminal-container">
         <div class="divider">====================================================</div>
-        <div class="divider"> 📊 签售销量监控面板 </div>
+        <div class="lucky-slogan" id="luckyText">买的全中 好运拉满</div>
         <div class="divider">====================================================</div>
 
-        <!-- 双选择框：平台 + 刷新间隔 -->
         <div class="select-wrap">
             <div>
                 <span class="info-text">选择平台：</span>
@@ -96,6 +102,14 @@
                     <option value="musicndrama">musicndrama</option>
                     <option value="beatroad">beatroad</option>
                     <option value="mokket">mokket</option>
+                </select>
+            </div>
+            <div>
+                <span class="info-text">合影类型：</span>
+                <select id="typeSel">
+                    <option value="ALL">全部</option>
+                    <option value="线上合影">线上合影</option>
+                    <option value="线下合影">线下合影</option>
                 </select>
             </div>
             <div>
@@ -122,7 +136,26 @@
         let allData = [];
         let refreshTimer = null;
 
-        // 加载数据
+        // 好运语录库 买的全中系列
+        const luckyWords = [
+            "买的全中 好运拉满",
+            "下单必中 权重爆棚",
+            "四叶加持 次次都中",
+            "只要下单 绝不落空",
+            "签售稳稳中 运气一直红",
+            "全网最优权重 买啥都能中",
+            "幸运通关 每单必中",
+            "一路全中 接单无忧"
+        ];
+
+        // 按日期随机选一句 每天固定不乱跳
+        function setLuckySlogan() {
+            const today = new Date().toDateString();
+            const seed = today.charCodeAt(0) + today.charCodeAt(4) + today.charCodeAt(9);
+            const idx = seed % luckyWords.length;
+            document.getElementById('luckyText').innerText = luckyWords[idx];
+        }
+
         function loadCSV() {
             fetch('data.csv')
                 .then(res => res.text())
@@ -138,9 +171,9 @@
                 });
         }
 
-        // 渲染列表
         function renderData() {
-            let sel = document.getElementById('platformSel').value;
+            let selPlatform = document.getElementById('platformSel').value;
+            let selType = document.getElementById('typeSel').value;
             let area = document.getElementById('logArea');
             area.innerHTML = '';
 
@@ -153,9 +186,10 @@
                 let sales = arr[2];
                 let time = arr[3];
 
-                if(sel !== 'ALL' && p !== sel) continue;
+                if(selPlatform !== 'ALL' && p !== selPlatform) continue;
+                if(selType !== 'ALL' && kind !== selType) continue;
 
-                let typeClass = kind === '线上团签' ? 'type-online' : 'type-offline';
+                let typeClass = kind === '线上合影' ? 'type-online' : 'type-offline';
                 let line = `
                 <div class="log-line">
                     <span class="platform-tag">[${p}]</span>
@@ -168,18 +202,18 @@
             }
         }
 
-        // 设置自动刷新
         function setRefresh() {
             if(refreshTimer) clearInterval(refreshTimer);
             let gap = parseInt(document.getElementById('refreshSel').value);
             refreshTimer = setInterval(loadCSV, gap);
         }
 
-        // 监听切换
         document.getElementById('platformSel').addEventListener('change', renderData);
+        document.getElementById('typeSel').addEventListener('change', renderData);
         document.getElementById('refreshSel').addEventListener('change', setRefresh);
 
         // 初始化
+        setLuckySlogan();
         loadCSV();
         setRefresh();
     </script>
