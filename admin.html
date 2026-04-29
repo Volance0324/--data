@@ -60,7 +60,6 @@
             margin:3px;
             font-size:13px;
         }
-        .btn-lock{background:#e8a7b1;}
         .btn-del{background:#c47c7c;}
         .list {margin-top: 20px;}
         .good {
@@ -82,6 +81,12 @@
         .section-title{
             font-size:16px;font-weight:bold;margin:20px 0 10px;text-align:center;
         }
+        .radio-line{
+            margin:8px 0;
+            display:flex;
+            gap:15px;
+            align-items:center;
+        }
     </style>
 </head>
 <body>
@@ -96,21 +101,21 @@
 <div class="container" id="main" style="display:none;">
     <h3>📂 数据管理后台</h3>
 
-    <div class="section-title">一、上传实时数据（默认公开 不可上锁）</div>
+    <div class="section-title">一、上传实时数据（固定公开）</div>
     <div class="upload-box">
         <input type="file" id="fileReal">
         <div class="tip">log/txt/xlsx 任意格式</div>
         <button onclick="uploadReal()">解析导入</button>
     </div>
 
-    <div class="section-title">二、上传往期数据（上传后手动逐条上锁/解锁）</div>
+    <div class="section-title">二、上传往期数据</div>
     <div class="upload-box">
         <input type="file" id="fileOld">
-        <div class="tip">先上传，下方列表再单独设置锁状态</div>
+        <div class="tip">上传后每条直接勾选 公开/加密</div>
         <button onclick="uploadOld()">解析导入往期</button>
     </div>
 
-    <div class="section-title">三、数据管理列表</div>
+    <div class="section-title">三、数据列表管理</div>
     <div class="list" id="list"></div>
 </div>
 
@@ -151,7 +156,6 @@ function parseText(content){
     return res;
 }
 
-// 上传实时
 function uploadReal(){
     let f = document.getElementById("fileReal").files[0];
     if(!f){alert("请选择文件");return;}
@@ -184,7 +188,6 @@ function uploadReal(){
     }
 }
 
-// 上传往期 默认先公开
 function uploadOld(){
     let f = document.getElementById("fileOld").files[0];
     if(!f){alert("请选择文件");return;}
@@ -198,11 +201,10 @@ function uploadOld(){
             let json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
             let d = getOld();
             json.forEach(i=>{
-                // 默认不上锁，后台后面自己改
                 d.push({team:i.团体||"未知",plat:i.平台||"日志",type:i.类型||"普通",lock:false});
             });
             saveOld(d);
-            alert("往期导入成功："+json.length+"条，可下方手动上锁");
+            alert("往期导入成功，可直接勾选公开/加密");
         }
         return;
     }
@@ -214,14 +216,14 @@ function uploadOld(){
         let d = getOld();
         d.push(...list);
         saveOld(d);
-        alert("往期导入成功："+list.length+"条，可下方手动上锁");
+        alert("往期导入成功，可直接勾选公开/加密");
     }
 }
 
-// 切换往期单条锁状态
-function toggleOldLock(i){
+// 直接单选修改锁状态，无需点按钮切换
+function setOldLock(idx, val){
     let d = getOld();
-    d[i].lock = !d[i].lock;
+    d[idx].lock = val;
     saveOld(d);
 }
 
@@ -254,15 +256,17 @@ function renderAll(){
         </div>`;
     });
 
-    html += `<div class="section-title">📁 往期数据（可上锁）共${old.length}条</div>`;
+    html += `<div class="section-title">📁 往期数据（直接勾选状态）共${old.length}条</div>`;
     old.forEach((it,i)=>{
         html += `
         <div class="good">
             <div>团体：${it.team}</div>
             <div>平台：${it.plat}</div>
             <div>类型：${it.type}</div>
-            <div>状态：${it.lock?"🔒 已加密":"✅ 公开"}</div>
-            <button class="btn-lock" onclick="toggleOldLock(${i})">${it.lock?"解锁":"上锁"}</button>
+            <div class="radio-line">
+                <label><input type="radio" name="lock${i}" onchange="setOldLock(${i},false)" ${!it.lock?'checked':''}> 公开</label>
+                <label><input type="radio" name="lock${i}" onchange="setOldLock(${i},true)" ${it.lock?'checked':''}> 加密上锁</label>
+            </div>
             <button class="btn-del" onclick="delOld(${i})">删除</button>
         </div>`;
     });
