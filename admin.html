@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>管理员后台 - 签售链接管理</title>
     <style>
-        /* 高级感配色定义 */
         :root {
             --color-bg-main: #d2e1f2;    /* 浅蓝背景 */
             --color-bg-card: #f6f6f6;   /* 白色卡片 */
@@ -37,33 +36,8 @@
             padding: 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
-        .item {
-            margin: 10px 0;
-        }
-        input, select, button {
-            width: 100%;
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 6px;
-            border: 1px solid var(--color-border);
-            font-size: 14px;
-        }
-        input, select {
-            background: #fff;
-            color: var(--color-text);
-        }
-        button {
-            background: var(--color-btn);
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        button:hover {
-            background: var(--color-btn-hover);
-        }
         .list {
-            margin-top: 30px;
+            margin-top: 10px;
         }
         .good {
             background: #fff;
@@ -83,34 +57,16 @@
             cursor: pointer;
             margin-top: 8px;
         }
+        .empty-tip {
+            text-align: center;
+            color: #aaa;
+            padding: 30px 0;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h3>管理员 - 添加签售链接</h3>
-        <div class="item">
-            <select id="plat">
-                <option value="ktown4u">ktown4u</option>
-                <option value="iminitv">iminitv</option>
-                <option value="fanme">fanme</option>
-                <option value="itta">itta</option>
-                <option value="musicndrama">musicndrama</option>
-                <option value="beatroad">beatroad</option>
-                <option value="mokket">mokket</option>
-            </select>
-        </div>
-        <div class="item">
-            <select id="type">
-                <option value="线上签售">线上签售</option>
-                <option value="线下签售">线下签售</option>
-                <option value="合影">合影</option>
-            </select>
-        </div>
-        <div class="item">
-            <input id="link" placeholder="输入商品链接">
-        </div>
-        <button onclick="add()">添加</button>
-
+        <h3>管理员后台 - 签售链接管理</h3>
         <div class="list" id="list"></div>
     </div>
 
@@ -122,36 +78,25 @@
             localStorage.setItem("goodsData",JSON.stringify(d))
         }
 
-        function add(){
-            let p=document.getElementById("plat").value
-            let t=document.getElementById("type").value
-            let l=document.getElementById("link").value
-            if(!l){
-                alert("请输入链接");
-                return
-            }
-            let d=getData()
-            d.push({plat:p,type:t,link:l})
-            save(d)
-            document.getElementById("link").value=""
-            render()
-            alert("添加成功！前端已自动更新")
-        }
-
         function render(){
             let d=getData()
             let h=""
-            d.forEach((it,i)=>{
-                h+=`<div class="good">
-                    <div style="font-weight:bold;color:var(--color-text);margin-bottom:4px;">[${it.plat}] ${it.type}</div>
-                    <div style="font-size:13px;color:#777;word-break:break-all;">${it.link}</div>
-                    <button class="del" onclick="del(${i})">删除</button>
-                </div>`
-            })
+            if(d.length===0){
+                h = `<div class="empty-tip">暂无商品数据</div>`;
+            }else{
+                d.forEach((it,i)=>{
+                    h+=`<div class="good">
+                        <div style="font-weight:bold;color:var(--color-text);margin-bottom:4px;">[${it.plat}] ${it.type}</div>
+                        <div style="font-size:13px;color:#777;word-break:break-all;">${it.link}</div>
+                        <button class="del" onclick="del(${i})">删除</button>
+                    </div>`
+                })
+            }
             document.getElementById("list").innerHTML=h
         }
 
         function del(i){
+            if(!confirm("确定要删除这条商品吗？")) return;
             let d=getData()
             d.splice(i,1)
             save(d)
