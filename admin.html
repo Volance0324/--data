@@ -95,6 +95,9 @@
             text-align:center;
             color:var(--color-dark);
         }
+        .radio-box{
+            margin:10px 0;
+        }
     </style>
 </head>
 <body>
@@ -110,17 +113,21 @@
 <div class="container" id="main" style="display:none;">
     <h3>📂 数据上传管理后台</h3>
 
-    <div class="section-title">一、上传到实时数据（公开）</div>
+    <div class="section-title">一、上传到实时数据（全部公开）</div>
     <div class="upload-box">
         <input type="file" id="fileReal">
         <div class="tip">支持 log/txt/xlsx/图片 任意格式</div>
         <button onclick="uploadReal()">解析存入实时数据</button>
     </div>
 
-    <div class="section-title">二、上传到往期数据（加密需密码）</div>
+    <div class="section-title">二、上传到往期数据（可选择是否加密）</div>
     <div class="upload-box">
         <input type="file" id="fileOld">
-        <div class="tip">上传历史日志，自动归入加密往期板块</div>
+        <div class="radio-box">
+            <label><input type="radio" name="oldLock" value="0" checked> 公开不加密</label>
+            <label><input type="radio" name="oldLock" value="1"> 加密上锁</label>
+        </div>
+        <div class="tip">任意文件格式，可自主选择是否加密</div>
         <button onclick="uploadOld()">解析存入往期数据</button>
     </div>
 
@@ -129,20 +136,18 @@
 </div>
 
 <script>
-// 密码配置
-const ADMIN_PASS = "admin123";     // 管理员后台密码
-const OLD_DATA_PASS = "666888";    // 往期数据查看独立密码
+// 已按你要求改好密码
+const ADMIN_PASS = "6666";     // 管理员登录密码
+const OLD_DATA_PASS = "8888";  // 往期解锁密码
 
 const KEY_REAL = "realData";
 const KEY_OLD = "oldData";
 
-// 读写
 function getReal(){return JSON.parse(localStorage.getItem(KEY_REAL)||"[]");}
 function saveReal(arr){localStorage.setItem(KEY_REAL,JSON.stringify(arr));renderAll();}
 function getOld(){return JSON.parse(localStorage.getItem(KEY_OLD)||"[]");}
 function saveOld(arr){localStorage.setItem(KEY_OLD,JSON.stringify(arr));renderAll();}
 
-// 管理员登录
 function login(){
     let v = document.getElementById("pwd").value;
     if(v === ADMIN_PASS){
@@ -154,7 +159,6 @@ function login(){
     }
 }
 
-// 解析文本通用方法
 function parseText(content){
     let lines = content.split(/\r?\n/);
     let res = [];
@@ -174,7 +178,6 @@ function parseText(content){
     return res;
 }
 
-// 上传实时
 function uploadReal(){
     let f = document.getElementById("fileReal").files[0];
     if(!f){alert("请选择文件");return;}
@@ -196,7 +199,6 @@ function uploadReal(){
         return;
     }
 
-    // log/txt/其他
     let r = new FileReader();
     r.readAsText(f);
     r.onload = e=>{
@@ -208,11 +210,11 @@ function uploadReal(){
     }
 }
 
-// 上传往期
 function uploadOld(){
     let f = document.getElementById("fileOld").files[0];
     if(!f){alert("请选择文件");return;}
     let name = f.name;
+    let needLock = document.querySelector('input[name="oldLock"]:checked').value === "1";
 
     if(name.match(/\.(xlsx|xls)$/i)){
         let r = new FileReader();
@@ -222,10 +224,15 @@ function uploadOld(){
             let json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
             let d = getOld();
             json.forEach(i=>{
-                d.push({team:i.团体||"未知",plat:i.平台||"日志",type:i.类型||"普通",lock:false});
+                d.push({
+                    team:i.团体||"未知",
+                    plat:i.平台||"日志",
+                    type:i.类型||"普通",
+                    lock:needLock
+                });
             });
             saveOld(d);
-            alert("往期数据导入成功："+json.length+"条");
+            alert("往期数据导入成功："+json.length+"条\n"+(needLock?"已设为加密":"已设为公开"));
         }
         return;
     }
@@ -235,19 +242,19 @@ function uploadOld(){
     r.onload = e=>{
         let list = parseText(e.target.result);
         let d = getOld();
+        list.forEach(item=>item.lock = needLock);
         d.push(...list);
         saveOld(d);
-        alert("往期日志解析成功："+list.length+"条");
+        alert("往期日志解析成功："+list.length+"条\n"+(needLock?"已设为加密":"已设为公开"));
     }
 }
 
-// 渲染全部
 function renderAll(){
     let real = getReal();
     let old = getOld();
     let html = "";
 
-    html += `<div class="section-title">📊 实时数据 共${real.length}条</div>`;
+    html += `<div class="section-title">📊 实时数据 共${real.length}条（全部公开）</div>`;
     real.forEach((it,i)=>{
         html += `
         <div class="good">
@@ -258,13 +265,14 @@ function renderAll(){
         </div>`;
     });
 
-    html += `<div class="section-title">📁 往期加密数据 共${old.length}条</div>`;
+    html += `<div class="section-title">📁 往期数据 共${old.length}条</div>`;
     old.forEach((it,i)=>{
         html += `
         <div class="good">
             <div>团体：${it.team}</div>
             <div>平台：${it.plat}</div>
             <div>类型：${it.type}</div>
+            <div>状态：${it.lock?"🔒 加密私密":"✅ 公开"}</div>
             <button class="del" onclick="delOld(${i})">删除</button>
         </div>`;
     });
