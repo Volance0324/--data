@@ -15,6 +15,7 @@
             --color-gray: #D6D2C4;
             --color-light: #FFF5EA;
             --color-pink: #F7DAD9;
+            --color-highlight: #ffd6dd; /* 变动记录高亮色 */
         }
         body{
             background: var(--color-light);
@@ -87,7 +88,14 @@
             border-radius:8px;
             word-break:break-all;
         }
-        .log-text{
+        .log-header{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            cursor:pointer;
+            font-weight:bold;
+        }
+        .log-content{
             margin-top:10px;
             padding:12px;
             background:#ffffff;
@@ -97,6 +105,16 @@
             font-family: Consolas;
             font-size:13px;
             line-height:1.8;
+            display:none; /* 默认隐藏，点击才展开 */
+        }
+        .log-content.expanded{
+            display:block;
+        }
+        /* 变动记录高亮 */
+        .log-content .change-line{
+            background-color: var(--color-highlight);
+            padding:2px 4px;
+            border-radius:3px;
         }
         .lock-area{
             padding:15px;
@@ -191,18 +209,44 @@
     let isUnlocked = false;
     let refreshTimer = null;
 
+    // 处理日志内容，给变动记录加粉色高亮
+    function processLogContent(text){
+        let lines = text.split("\n");
+        let processed = lines.map(line => {
+            if(line.includes("[变动]")){
+                return `<span class="change-line">${line}</span>`;
+            }
+            return line;
+        });
+        return processed.join("\n");
+    }
+
+    // 渲染单条日志项（可点击展开）
+    function renderLogItem(item, index){
+        const processedContent = processLogContent(item.content);
+        return `
+        <div class="goods-item">
+            <div class="log-header" onclick="toggleLog(${index})">
+                <span>📄 日志文件 #${index+1}</span>
+                <span style="color:var(--color-pink);">点击查看详情 ↓</span>
+            </div>
+            <div class="log-content" id="log-${index}">${processedContent}</div>
+        </div>`;
+    }
+
+    function toggleLog(index){
+        const el = document.getElementById(`log-${index}`);
+        el.classList.toggle("expanded");
+    }
+
     function renderRealData(){
         let arr = JSON.parse(localStorage.getItem("realData")||"[]");
         let html = "";
         if(arr.length <= 0){
             html = '<div style="text-align:center;color:#999;padding:20px;">暂无实时日志数据</div>';
         }else{
-            arr.forEach(item=>{
-                html += `
-                <div class="goods-item">
-                    <div>📄 实时日志文件</div>
-                    <div class="log-text">${item.content}</div>
-                </div>`;
+            arr.forEach((item, index)=>{
+                html += renderLogItem(item, `real-${index}`);
             });
         }
         document.getElementById("realList").innerHTML = html;
@@ -214,18 +258,14 @@
         if(arr.length <= 0){
             html = '<div style="text-align:center;color:#999;padding:20px;">暂无往期日志数据</div>';
         }else{
-            arr.forEach(item=>{
+            arr.forEach((item, index)=>{
                 if(item.lock && !isUnlocked){
                     html += `
                     <div class="goods-item" style="background:#ffeef0;">
                         🔒 本条日志已加密，解锁后可查看原文
                     </div>`;
                 }else{
-                    html += `
-                    <div class="goods-item">
-                        <div>📄 往期日志文件</div>
-                        <div class="log-text">${item.content}</div>
-                    </div>`;
+                    html += renderLogItem(item, `old-${index}`);
                 }
             });
         }
