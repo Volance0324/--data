@@ -14,37 +14,23 @@
             background-color: #1e1e1e;
             color: #d4d4d4;
             font-family: Consolas, "Courier New", monospace;
-            padding: 15px;
-            line-height: 1.8;
+            padding: 10px;
+            line-height: 1.6;
         }
         .terminal-container {
             max-width: 1000px;
             margin: 0 auto;
             border: 1px solid #333;
-            padding: 20px;
+            padding: 15px;
             background-color: #252526;
             border-radius: 12px;
         }
-        .select-wrap {
-            margin: 20px 0;
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .select-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        select {
-            padding: 8px 12px;
-            background: #333;
+        .main-title {
             color: #ff79c6;
-            border: 1px solid #555;
-            border-radius: 4px;
-            font-size: 15px;
-            font-family: inherit;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 8px;
         }
         .divider {
             color: #6a9955;
@@ -54,9 +40,31 @@
         .lucky-slogan {
             color: #ff79c6;
             text-align: center;
-            font-size: 18px;
+            font-size: 17px;
             margin-bottom: 12px;
             font-weight: bold;
+        }
+        .select-wrap {
+            margin: 15px 0;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .select-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        select {
+            padding: 6px 10px;
+            background: #333;
+            color: #ff79c6;
+            border: 1px solid #555;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+            max-width: 130px;
         }
         .status {
             color: #4ec9b0;
@@ -77,6 +85,9 @@
         .type-offline {
             color: #ffb86c;
         }
+        .type-photo {
+            color: #ff79c6;
+        }
         .sales-high {
             color: #ff79c6;
             font-weight: bold;
@@ -85,23 +96,38 @@
             margin: 6px 0;
             padding-left: 10px;
             border-left: 2px solid #333;
+            word-break: break-all;
         }
 
-        /* 手机端适配 */
+        /* 手机端终极适配 */
         @media (max-width: 600px) {
-            .select-wrap {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
+            body {
+                padding: 5px;
+            }
+            .terminal-container {
+                padding: 12px;
+            }
+            .main-title {
+                font-size: 18px;
             }
             .lucky-slogan {
                 font-size: 16px;
             }
-            body {
-                padding: 10px;
+            .select-wrap {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
             }
-            .terminal-container {
-                padding: 15px;
+            .select-item {
+                width: 100%;
+                justify-content: space-between;
+            }
+            select {
+                width: 60%;
+                max-width: none;
+            }
+            .log-line {
+                font-size: 14px;
             }
         }
     </style>
@@ -109,12 +135,13 @@
 <body>
     <div class="terminal-container">
         <div class="divider">====================================================</div>
+        <div class="main-title">四叶幸运通行证</div>
         <div class="lucky-slogan" id="luckyText">下单必中 权重爆棚</div>
         <div class="divider">====================================================</div>
 
         <div class="select-wrap">
             <div class="select-item">
-                <span class="info-text">选择平台：</span>
+                <span class="info-text">平台：</span>
                 <select id="platformSel">
                     <option value="ALL">全部平台</option>
                     <option value="ktown4u">ktown4u</option>
@@ -130,11 +157,12 @@
                 </select>
             </div>
             <div class="select-item">
-                <span class="info-text">类型：线上/线下/合影</span>
+                <span class="info-text">类型：</span>
                 <select id="typeSel">
                     <option value="ALL">全部</option>
-                    <option value="线上合影">线上合影</option>
-                    <option value="线下合影">线下合影</option>
+                    <option value="线上签售">线上签售</option>
+                    <option value="线下签售">线下签售</option>
+                    <option value="合影">合影</option>
                 </select>
             </div>
             <div class="select-item">
@@ -212,7 +240,10 @@
                 if(selPlatform !== 'ALL' && p !== selPlatform) continue;
                 if(selType !== 'ALL' && kind !== selType) continue;
 
-                let typeClass = kind === '线上合影' ? 'type-online' : 'type-offline';
+                let typeClass = 'type-photo';
+                if (kind === '线上签售') typeClass = 'type-online';
+                else if (kind === '线下签售') typeClass = 'type-offline';
+
                 let line = `
                 <div class="log-line">
                     <span class="platform-tag">[${p}]</span>
