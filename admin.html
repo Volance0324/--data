@@ -60,8 +60,18 @@
             margin:3px;
             font-size:13px;
         }
-        .btn-del{background:#c47c7c;}
-        .list {margin-top: 20px;}
+        button:hover{
+            background: var(--color-btn-hover);
+        }
+        .btn-del{
+            background:#c47c7c;
+        }
+        .btn-del:hover{
+            background:#a86868;
+        }
+        .list {
+            margin-top: 20px;
+        }
         .good {
             background: #fff;
             padding: 12px;
@@ -69,17 +79,36 @@
             border-radius: 8px;
             border: 1px solid var(--color-border);
         }
-        .tip{font-size:13px;color:#999;margin:10px 0;text-align:center;}
+        .tip{
+            font-size:13px;
+            color:#999;
+            margin:10px 0;
+            text-align:center;
+        }
         .lock-screen{
-            position:fixed;top:0;left:0;width:100%;height:100%;
+            position:fixed;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
             background:var(--color-bg-main);
-            display:flex;align-items:center;justify-content:center;z-index:9999;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            z-index:9999;
         }
         .lock-box{
-            background:var(--color-bg-card);padding:30px;border-radius:12px;text-align:center;width:300px;
+            background:var(--color-bg-card);
+            padding:30px;
+            border-radius:12px;
+            text-align:center;
+            width:300px;
         }
         .section-title{
-            font-size:16px;font-weight:bold;margin:20px 0 10px;text-align:center;
+            font-size:16px;
+            font-weight:bold;
+            margin:20px 0 10px;
+            text-align:center;
         }
         .radio-line{
             margin:8px 0;
@@ -104,14 +133,14 @@
     <div class="section-title">一、上传实时数据（固定公开）</div>
     <div class="upload-box">
         <input type="file" id="fileReal">
-        <div class="tip">log/txt/xlsx 任意格式</div>
+        <div class="tip">log/txt/xlsx 任意格式 一个文件只算1条</div>
         <button onclick="uploadReal()">解析导入</button>
     </div>
 
     <div class="section-title">二、上传往期数据</div>
     <div class="upload-box">
         <input type="file" id="fileOld">
-        <div class="tip">上传后每条直接勾选 公开/加密</div>
+        <div class="tip">上传只生成1条，不拆分多行，默认公开</div>
         <button onclick="uploadOld()">解析导入往期</button>
     </div>
 
@@ -121,15 +150,23 @@
 
 <script>
 const ADMIN_PASS = "6666";
-const OLD_DATA_PASS = "8888";
-
 const KEY_REAL = "realData";
 const KEY_OLD = "oldData";
 
-function getReal(){return JSON.parse(localStorage.getItem(KEY_REAL)||"[]");}
-function saveReal(arr){localStorage.setItem(KEY_REAL,JSON.stringify(arr));renderAll();}
-function getOld(){return JSON.parse(localStorage.getItem(KEY_OLD)||"[]");}
-function saveOld(arr){localStorage.setItem(KEY_OLD,JSON.stringify(arr));renderAll();}
+function getReal(){
+    return JSON.parse(localStorage.getItem(KEY_REAL)||"[]");
+}
+function saveReal(arr){
+    localStorage.setItem(KEY_REAL,JSON.stringify(arr));
+    renderAll();
+}
+function getOld(){
+    return JSON.parse(localStorage.getItem(KEY_OLD)||"[]");
+}
+function saveOld(arr){
+    localStorage.setItem(KEY_OLD,JSON.stringify(arr));
+    renderAll();
+}
 
 function login(){
     let v = document.getElementById("pwd").value;
@@ -142,102 +179,63 @@ function login(){
     }
 }
 
-function parseText(content){
-    let lines = content.split(/\r?\n/);
-    let res = [];
-    lines.forEach(line=>{
-        line = line.trim();
-        if(!line) return;
-        let m = line.match(/(\d{4}.*?\d{2}:\d{2}:\d{2}).*?\[(.+?)\].*?(团体签售|团体)/);
-        if(m){
-            res.push({team:"团体签售",plat:"日志",type:m[2],lock:false});
-        }
-    });
-    return res;
+function readFileToItem(file, cb){
+    let reader = new FileReader();
+    reader.onload = function(e){
+        let item = {
+            content: e.target.result,
+            lock: false
+        };
+        cb(item);
+    };
+    reader.readAsText(file);
 }
 
 function uploadReal(){
     let f = document.getElementById("fileReal").files[0];
-    if(!f){alert("请选择文件");return;}
-    let name = f.name;
-
-    if(name.match(/\.(xlsx|xls)$/i)){
-        let r = new FileReader();
-        r.readAsArrayBuffer(f);
-        r.onload = e=>{
-            let wb = XLSX.read(new Uint8Array(e.target.result),{type:"array"});
-            let json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            let d = getReal();
-            json.forEach(i=>{
-                d.push({team:i.团体||"未知",plat:i.平台||"日志",type:i.类型||"普通",lock:false});
-            });
-            saveReal(d);
-            alert("导入成功："+json.length+"条");
-        }
+    if(!f){
+        alert("请先选择文件");
         return;
     }
-
-    let r = new FileReader();
-    r.readAsText(f);
-    r.onload = e=>{
-        let list = parseText(e.target.result);
-        let d = getReal();
-        d.push(...list);
-        saveReal(d);
-        alert("导入成功："+list.length+"条");
-    }
+    readFileToItem(f, function(item){
+        let arr = getReal();
+        arr.push(item);
+        saveReal(arr);
+        alert("上传成功，仅生成1条，不拆分");
+    });
 }
 
 function uploadOld(){
     let f = document.getElementById("fileOld").files[0];
-    if(!f){alert("请选择文件");return;}
-    let name = f.name;
-
-    if(name.match(/\.(xlsx|xls)$/i)){
-        let r = new FileReader();
-        r.readAsArrayBuffer(f);
-        r.onload = e=>{
-            let wb = XLSX.read(new Uint8Array(e.target.result),{type:"array"});
-            let json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            let d = getOld();
-            json.forEach(i=>{
-                d.push({team:i.团体||"未知",plat:i.平台||"日志",type:i.类型||"普通",lock:false});
-            });
-            saveOld(d);
-            alert("往期导入成功，可直接勾选公开/加密");
-        }
+    if(!f){
+        alert("请先选择文件");
         return;
     }
-
-    let r = new FileReader();
-    r.readAsText(f);
-    r.onload = e=>{
-        let list = parseText(e.target.result);
-        let d = getOld();
-        d.push(...list);
-        saveOld(d);
-        alert("往期导入成功，可直接勾选公开/加密");
-    }
+    readFileToItem(f, function(item){
+        let arr = getOld();
+        arr.push(item);
+        saveOld(arr);
+        alert("往期上传成功，仅生成1条，默认公开");
+    });
 }
 
-// 直接单选修改锁状态，无需点按钮切换
-function setOldLock(idx, val){
-    let d = getOld();
-    d[idx].lock = val;
-    saveOld(d);
+function setOldLock(index, val){
+    let arr = getOld();
+    arr[index].lock = val;
+    saveOld(arr);
 }
 
-function delReal(i){
-    if(!confirm("确定删除？"))return;
-    let d = getReal();
-    d.splice(i,1);
-    saveReal(d);
+function delReal(idx){
+    if(!confirm("确定删除？")) return;
+    let arr = getReal();
+    arr.splice(idx,1);
+    saveReal(arr);
 }
-function delOld(i){
-    if(!confirm("确定删除？"))return;
-    let d = getOld();
-    d.splice(i,1);
-    saveOld(d);
+function delOld(idx){
+    if(!confirm("确定删除？")) return;
+    let arr = getOld();
+    arr.splice(idx,1);
+    saveOld(arr);
 }
 
 function renderAll(){
@@ -245,27 +243,23 @@ function renderAll(){
     let old = getOld();
     let html = "";
 
-    html += `<div class="section-title">📊 实时数据（全部公开）共${real.length}条</div>`;
-    real.forEach((it,i)=>{
+    html += `<div class="section-title">📊 实时数据 共${real.length}条</div>`;
+    real.forEach((item,i)=>{
         html += `
         <div class="good">
-            <div>团体：${it.team}</div>
-            <div>平台：${it.plat}</div>
-            <div>类型：${it.type}</div>
+            <div>实时日志记录</div>
             <button class="btn-del" onclick="delReal(${i})">删除</button>
         </div>`;
     });
 
-    html += `<div class="section-title">📁 往期数据（直接勾选状态）共${old.length}条</div>`;
-    old.forEach((it,i)=>{
+    html += `<div class="section-title">📁 往期数据 共${old.length}条</div>`;
+    old.forEach((item,i)=>{
         html += `
         <div class="good">
-            <div>团体：${it.team}</div>
-            <div>平台：${it.plat}</div>
-            <div>类型：${it.type}</div>
+            <div>往期日志记录</div>
             <div class="radio-line">
-                <label><input type="radio" name="lock${i}" onchange="setOldLock(${i},false)" ${!it.lock?'checked':''}> 公开</label>
-                <label><input type="radio" name="lock${i}" onchange="setOldLock(${i},true)" ${it.lock?'checked':''}> 加密上锁</label>
+                <label><input type="radio" name="lock${i}" onchange="setOldLock(${i},false)" ${!item.lock?'checked':''}> 公开</label>
+                <label><input type="radio" name="lock${i}" onchange="setOldLock(${i},true)" ${item.lock?'checked':''}> 加密</label>
             </div>
             <button class="btn-del" onclick="delOld(${i})">删除</button>
         </div>`;
