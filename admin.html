@@ -115,10 +115,10 @@
 </div>
 
 <div class="container" id="main" style="display:none;">
-    <h3>📂 文件上传 & 权限管理</h3>
+    <h3>📂 文件上传 & 权限管理（支持.log/.txt/xlsx/图片）</h3>
     <div class="upload-box">
-        <input type="file" id="file" accept=".xlsx,.xls,.log,.txt,.png,.jpg,.jpeg">
-        <div class="tip">支持：Excel / log / txt / 图片</div>
+        <input type="file" id="file">
+        <div class="tip">支持任意文件：.log/.txt/.xlsx/.xls/图片<br>单文件建议≤5MB</div>
         <button onclick="upload()">解析并导入</button>
     </div>
 
@@ -157,6 +157,11 @@ function upload(){
     if(!f){alert("请选择文件");return}
     let n = f.name;
 
+    // 大小提醒
+    if(f.size > 5*1024*1024){
+        alert("文件超过5MB，可能无法正常保存/解析");
+    }
+
     if(n.match(/\.(jpg|png|jpeg)$/i)){
         let r = new FileReader();
         r.readAsDataURL(f);
@@ -190,31 +195,31 @@ function upload(){
         return;
     }
 
-    if(n.match(/\.(log|txt)$/i)){
-        let r = new FileReader();
-        r.readAsText(f);
-        r.onload = e=>{
-            let t = e.target.result;
-            let lines = t.split(/\r?\n/);
-            let d = getData();
-            let cnt = 0;
-            lines.forEach(line=>{
-                line = line.trim();
-                if(!line) return;
-                let m = line.match(/(\d{4}.*?\d{2}:\d{2}:\d{2}).*?\[(.+?)\].*?团体签售/);
-                if(m){
-                    d.push({
-                        team:"团体签售",
-                        plat:"日志",
-                        type:m[2]||"无变动",
-                        lock:false
-                    });
-                    cnt++;
-                }
-            });
-            save(d);
-            alert("日志解析成功："+cnt+"条");
-        }
+    // log/txt/其他文本
+    let r = new FileReader();
+    r.readAsText(f);
+    r.onload = e=>{
+        let t = e.target.result;
+        let lines = t.split(/\r?\n/);
+        let d = getData();
+        let cnt = 0;
+        lines.forEach(line=>{
+            line = line.trim();
+            if(!line) return;
+            // 你的日志格式：时间 - [状态] ...团体签售
+            let m = line.match(/(\d{4}.*?\d{2}:\d{2}:\d{2}).*?\[(.+?)\].*?(团体签售|团体)/);
+            if(m){
+                d.push({
+                    team:"团体签售",
+                    plat:"日志",
+                    type:m[2]||"无变动",
+                    lock:false
+                });
+                cnt++;
+            }
+        });
+        save(d);
+        alert("解析成功："+cnt+"条（未匹配的行忽略）");
     }
 }
 
