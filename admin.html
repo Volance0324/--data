@@ -2,61 +2,161 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>管理员上传</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员文档上传后台</title>
     <style>
-        body{max-width:900px;margin:40px auto;font-family:Arial;padding:0 20px}
-        .upload{border:2px dashed #42b983;padding:30px;text-align:center;border-radius:10px;margin-bottom:30px}
-        button{background:#42b983;color:white;border:none;padding:10px 20px;border-radius:6px;margin-top:15px;cursor:pointer}
-        .file-item{padding:12px;border:1px solid #eee;margin-bottom:8px;border-radius:6px}
-        .del{background:#f56c6c;margin-left:10px}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+        body {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        h2 {
+            margin-bottom: 25px;
+            color: #333;
+        }
+        .upload-box {
+            border: 2px dashed #409eff;
+            padding: 40px 20px;
+            text-align: center;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+        #fileInput {
+            margin-bottom: 20px;
+        }
+        .upload-btn {
+            background: #409eff;
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .upload-btn:hover {
+            background: #337ecc;
+        }
+        .file-item {
+            padding: 14px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .del-btn {
+            background: #f56c6c;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
-    <h2>📤 管理员文档上传</h2>
-    <div class="upload">
-        <input type="file" id="file" multiple accept=".txt,.pdf,.jpg,.png,.jpeg,.gif">
-        <button onclick="upload()">开始上传</button>
+    <h2>管理员文档上传后台</h2>
+
+    <div class="upload-box">
+        <input type="file" id="fileInput" multiple 
+               accept=".txt,.pdf,.jpg,.png,.jpeg,.gif">
+        <br>
+        <button class="upload-btn" onclick="uploadFile()">确认上传</button>
     </div>
-    <div id="list"></div>
+
+    <div id="fileList"></div>
 
     <script>
-        const KEY = "docs_data";
-        function get(){return JSON.parse(localStorage.getItem(KEY)||"[]")}
-        function save(arr){localStorage.setItem(KEY,JSON.stringify(arr));render()}
-        
-        function upload(){
-            let files = document.getElementById("file").files;
-            if(!files.length){alert("请选文件");return}
-            let list = get();
-            for(let f of files){
-                let reader = new FileReader();
-                reader.onload = e=>{
-                    list.push({
-                        name:f.name, type:f.type,
-                        url:e.target.result, time:new Date().toLocaleString()
-                    });
-                    save(list);
-                }
-                if(f.type.startsWith("image/")) reader.readAsDataURL(f);
-                else if(f.type==="text/plain") reader.readAsText(f);
-                else reader.readAsDataURL(f);
+        const STORAGE_KEY = "site_docs_data";
+
+        // 获取文档列表
+        function getDocs() {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        }
+
+        // 保存文档列表
+        function saveDocs(list) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+            renderAdminList();
+        }
+
+        // 上传文件
+        function uploadFile() {
+            const input = document.getElementById('fileInput');
+            const files = Array.from(input.files);
+
+            if (files.length === 0) {
+                alert('请先选择要上传的文档');
+                return;
             }
-            alert("上传成功！前端已自动更新");
-            document.getElementById("file").value="";
+
+            let docList = getDocs();
+
+            files.forEach(file => {
+                const reader = new FileReader();
+                // 文本文件直接读文字
+                if (file.type === "text/plain") {
+                    reader.readAsText(file);
+                } else {
+                    // 图片、PDF 转base64
+                    reader.readAsDataURL(file);
+                }
+
+                reader.onload = function (e) {
+                    docList.push({
+                        id: Date.now() + Math.random(),
+                        name: file.name,
+                        type: file.type,
+                        content: e.target.result,
+                        time: new Date().toLocaleString()
+                    });
+                    saveDocs(docList);
+                }
+            });
+
+            setTimeout(() => {
+                alert('上传成功，前端页面已自动更新！');
+                input.value = '';
+            }, 800);
         }
 
-        function render(){
-            let d=get(),h="";
-            d.forEach((i,k)=>{
-                h+=`<div class="file-item">${i.name} <button class="del" onclick="del(${k})">删除</button></div>`;
-            })
-            document.getElementById("list").innerHTML=h;
+        // 渲染管理员已上传列表
+        function renderAdminList() {
+            const listDom = document.getElementById('fileList');
+            const list = getDocs();
+
+            if (list.length === 0) {
+                listDom.innerHTML = '<p style="color:#999">暂无已上传文档</p>';
+                return;
+            }
+
+            let html = '';
+            list.forEach(item => {
+                html += `
+                    <div class="file-item">
+                        <span>${item.name}</span>
+                        <button class="del-btn" onclick="delDoc('${item.id}')">删除</button>
+                    </div>
+                `;
+            });
+            listDom.innerHTML = html;
         }
 
-        function del(k){
-            let d=get();d.splice(k,1);save(d);
+        // 删除文档
+        function delDoc(id) {
+            let list = getDocs().filter(item => item.id != id);
+            saveDocs(list);
         }
-        render();
+
+        // 页面加载渲染
+        window.onload = renderAdminList;
     </script>
 </body>
 </html>
