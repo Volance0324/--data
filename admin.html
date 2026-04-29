@@ -2,15 +2,16 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>管理员后台 - 签售链接管理</title>
+    <title>管理员后台 - 文档表格上传管理</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
-            --color-bg-main: #d2e1f2;    /* 浅蓝背景 */
-            --color-bg-card: #f6f6f6;   /* 白色卡片 */
-            --color-text: #776773;      /* 深灰紫文字 */
-            --color-border: #d2e1f2;    /* 边框用浅蓝 */
-            --color-btn: #776773;       /* 按钮主色 */
-            --color-btn-hover: #655761; /* 按钮 hover 加深 */
+            --color-bg-main: #d2e1f2;
+            --color-bg-card: #f6f6f6;
+            --color-text: #776773;
+            --color-border: #d2e1f2;
+            --color-btn: #776773;
+            --color-btn-hover: #655761;
         }
         * {
             margin: 0;
@@ -36,8 +37,32 @@
             padding: 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
+        .upload-box{
+            border:2px dashed var(--color-border);
+            padding:20px;
+            text-align:center;
+            border-radius:8px;
+            margin:15px 0;
+        }
+        input[type="file"]{
+            width:100%;
+            padding:8px;
+        }
+        button {
+            background: var(--color-btn);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin:5px 0;
+        }
+        button:hover {
+            background: var(--color-btn-hover);
+        }
         .list {
-            margin-top: 10px;
+            margin-top: 30px;
         }
         .good {
             background: #fff;
@@ -45,7 +70,6 @@
             margin: 10px 0;
             border-radius: 8px;
             border: 1px solid var(--color-border);
-            word-break: break-all;
         }
         .del {
             background: #c47c7c;
@@ -55,54 +79,120 @@
             font-size: 12px;
             border-radius: 4px;
             cursor: pointer;
-            margin-top: 8px;
+            margin-top:8px;
         }
-        .empty-tip {
-            text-align: center;
-            color: #aaa;
-            padding: 30px 0;
+        .tip{
+            font-size:13px;
+            color:#999;
+            margin:10px 0;
+            text-align:center;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h3>管理员后台 - 签售链接管理</h3>
+        <h3>管理员 - 表格/图片上传导入</h3>
+
+        <div class="upload-box">
+            <input type="file" id="fileUpload" accept=".xlsx,.xls,.jpg,.png,.jpeg">
+            <div class="tip">支持Excel表格 / 图片上传<br>表格格式：团体、平台、类型</div>
+            <button onclick="handleUpload()">解析并导入</button>
+        </div>
+
         <div class="list" id="list"></div>
     </div>
 
     <script>
+        const KEY = "goodsData";
+        // 获取数据
         function getData(){
-            return JSON.parse(localStorage.getItem("goodsData")||"[]")
+            return JSON.parse(localStorage.getItem(KEY)||"[]");
         }
-        function save(d){
-            localStorage.setItem("goodsData",JSON.stringify(d))
+        // 保存数据
+        function save(arr){
+            localStorage.setItem(KEY,JSON.stringify(arr));
+            renderList();
         }
 
-        function render(){
-            let d=getData()
-            let h=""
+        // 上传处理
+        function handleUpload(){
+            let file = document.getElementById("fileUpload").files[0];
+            if(!file){
+                alert("请先选择文件");
+                return;
+            }
+            let name = file.name;
+            // 图片直接存
+            if(name.match(/jpg|png|jpeg/i)){
+                let reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function(e){
+                    let arr = getData();
+                    arr.push({
+                        team:"图片素材",
+                        plat:"图片",
+                        type:"图片",
+                        img:e.target.result
+                    });
+                    save(arr);
+                    alert("图片上传成功，前端已更新");
+                }
+                return;
+            }
+            // Excel解析
+            if(name.match(/xlsx|xls/i)){
+                let reader = new FileReader();
+                reader.readAsArrayBuffer(file);
+                reader.onload = function(e){
+                    let data = new Uint8Array(e.target.result);
+                    let workbook = XLSX.read(data,{type:"array"});
+                    let sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    let json = XLSX.utils.sheet_to_json(sheet);
+                    
+                    let arr = getData();
+                    json.forEach(item=>{
+                        arr.push({
+                            team:item.团体||"未知团体",
+                            plat:item.平台||"未知平台",
+                            type:item.类型||"未知类型",
+                        });
+                    });
+                    save(arr);
+                    alert("表格解析导入成功！共导入"+json.length+"条");
+                }
+            }
+        }
+
+        // 渲染列表
+        function renderList(){
+            let d = getData();
+            let html = "";
             if(d.length===0){
-                h = `<div class="empty-tip">暂无商品数据</div>`;
+                html = '<div class="tip">暂无数据</div>';
             }else{
                 d.forEach((it,i)=>{
-                    h+=`<div class="good">
-                        <div style="font-weight:bold;color:var(--color-text);margin-bottom:4px;">[${it.plat}] ${it.type}</div>
-                        <div style="font-size:13px;color:#777;word-break:break-all;">${it.link}</div>
-                        <button class="del" onclick="del(${i})">删除</button>
-                    </div>`
-                })
+                    html += `
+                    <div class="good">
+                        <div><strong>团体：</strong>${it.team}</div>
+                        <div><strong>平台：</strong>${it.plat}</div>
+                        <div><strong>类型：</strong>${it.type}</div>
+                        <button class="del" onclick="delItem(${i})">删除</button>
+                    </div>
+                    `;
+                });
             }
-            document.getElementById("list").innerHTML=h
+            document.getElementById("list").innerHTML = html;
         }
 
-        function del(i){
-            if(!confirm("确定要删除这条商品吗？")) return;
-            let d=getData()
-            d.splice(i,1)
-            save(d)
-            render()
+        // 删除单条
+        function delItem(i){
+            if(!confirm("确定删除？"))return;
+            let d = getData();
+            d.splice(i,1);
+            save(d);
         }
-        render()
+
+        renderList();
     </script>
 </body>
 </html>
