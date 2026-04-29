@@ -2,9 +2,9 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>管理员后台（修复版）</title>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <title>管理员后台</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
             --color-bg-main: #d2e1f2;
@@ -63,25 +63,10 @@
         button:hover{
             background: var(--color-btn-hover);
         }
-        .btn-del{
-            background:#c47c7c;
-        }
-        .btn-rename{
-            background:#6799cc;
-            margin-right:5px;
-        }
-        .btn-batch{
-            background:#e74c3c;
-            margin-left:10px;
-        }
-        .btn-sync{
-            background:#27ae60;
-            margin-left:10px;
-        }
-        .btn-batch:disabled{
-            opacity:0.5;
-            cursor:not-allowed;
-        }
+        .btn-del{ background:#c47c7c; }
+        .btn-rename{ background:#6799cc; }
+        .btn-batch{ background:#e74c3c; }
+        .btn-batch:disabled{ opacity:0.5; cursor:not-allowed; }
         .top-bar{
             display:flex;
             align-items:center;
@@ -89,9 +74,7 @@
             margin-bottom:15px;
             flex-wrap:wrap;
         }
-        .list {
-            margin-top: 10px;
-        }
+        .list { margin-top: 10px; }
         .good {
             background: #fff;
             padding: 12px;
@@ -117,10 +100,8 @@
         }
         .lock-screen{
             position:fixed;
-            top:0;
-            left:0;
-            width:100%;
-            height:100%;
+            top:0;left:0;
+            width:100%;height:100%;
             background:var(--color-bg-main);
             display:flex;
             align-items:center;
@@ -158,29 +139,26 @@
 </div>
 
 <div class="container" id="main" style="display:none;">
-    <h3>📂 数据管理后台（修复版）</h3>
+    <h3>📂 数据管理后台</h3>
 
     <div class="section-title">一、上传实时数据（公开）</div>
     <div class="upload-box">
         <input type="file" id="fileReal">
-        <div class="tip">一个文件=一条记录</div>
+        <div class="tip">一个文件=一条记录，不拆分</div>
         <button onclick="uploadReal()">解析导入</button>
     </div>
 
     <div class="section-title">二、上传往期数据</div>
     <div class="upload-box">
         <input type="file" id="fileOld">
-        <div class="tip">支持加密、改名</div>
+        <div class="tip">支持改名、公开/加密</div>
         <button onclick="uploadOld()">解析导入往期</button>
     </div>
 
     <div class="section-title">三、数据列表管理</div>
-
-    <!-- 修复：全选+批量删除+同步按钮 -->
     <div class="top-bar">
-        <label><input type="checkbox" id="checkAll"> 全选所有</label>
+        <label><input type="checkbox" id="checkAll"> 全选</label>
         <button class="btn-batch" id="batchDelBtn" disabled onclick="batchDeleteAll()">🗑 删除选中</button>
-        <button class="btn-sync" onclick="syncData()">🔄 一键同步</button>
     </div>
 
     <div class="list" id="list"></div>
@@ -235,25 +213,18 @@ function readFileToItem(file, cb){
 
 function uploadReal(){
     let f = document.getElementById("fileReal").files[0];
-    if(!f){
-        alert("请先选择文件");
-        return;
-    }
-    readFileToItem(f, function(item){
+    if(!f){ alert("请先选择文件"); return; }
+    readFileToItem(f, item=>{
         let arr = getReal();
         arr.push(item);
         saveReal(arr);
         alert("上传成功");
     });
 }
-
 function uploadOld(){
     let f = document.getElementById("fileOld").files[0];
-    if(!f){
-        alert("请先选择文件");
-        return;
-    }
-    readFileToItem(f, function(item){
+    if(!f){ alert("请先选择文件"); return; }
+    readFileToItem(f, item=>{
         let arr = getOld();
         arr.push(item);
         saveOld(arr);
@@ -269,7 +240,7 @@ function setOldLock(index, val){
 
 function startRename(type, idx){
     let arr = type === 'real' ? getReal() : getOld();
-    let newName = prompt("新名称：", arr[idx].name);
+    let newName = prompt("自定义名称：", arr[idx].name);
     if(newName && newName.trim() !== ""){
         arr[idx].name = newName.trim();
         type === 'real' ? saveReal(arr) : saveOld(arr);
@@ -277,25 +248,24 @@ function startRename(type, idx){
 }
 
 function delReal(idx){
-    if(!realCheck[idx]){ alert("请先勾选"); return; }
-    if(!confirm("确定删除？"))return;
+    if(!realCheck[idx]){ alert("请先勾选本条"); return; }
+    if(!confirm("确定删除？")) return;
     let arr = getReal();
     arr.splice(idx,1);
     saveReal(arr);
 }
 function delOld(idx){
-    if(!oldCheck[idx]){ alert("请先勾选"); return; }
-    if(!confirm("确定删除？"))return;
+    if(!oldCheck[idx]){ alert("请先勾选本条"); return; }
+    if(!confirm("确定删除？")) return;
     let arr = getOld();
     arr.splice(idx,1);
     saveOld(arr);
 }
 
-// 修复：全选逻辑（真的能全选）
 document.getElementById("checkAll").addEventListener("change",function(){
-    let all = this.checked;
-    realCheck = realCheck.map(()=>all);
-    oldCheck = oldCheck.map(()=>all);
+    let stat = this.checked;
+    realCheck.fill(stat);
+    oldCheck.fill(stat);
     renderAll();
 });
 
@@ -305,7 +275,7 @@ function updateBatchBtn(){
 }
 
 function batchDeleteAll(){
-    if(!confirm("删除所有选中？"))return;
+    if(!confirm("确定删除所有选中记录？")) return;
     let realArr = getReal().filter((_,i)=>!realCheck[i]);
     let oldArr = getOld().filter((_,i)=>!oldCheck[i]);
     localStorage.setItem(KEY_REAL,JSON.stringify(realArr));
@@ -313,37 +283,11 @@ function batchDeleteAll(){
     renderAll();
 }
 
-// 一键同步：把本地数据导出成文本，另一设备粘贴即可
-function syncData(){
-    const data = {
-        realData: getReal(),
-        oldData: getOld()
-    };
-    const json = JSON.stringify(data, null, 2);
-    navigator.clipboard.writeText(json).then(()=>{
-        alert("✅ 已复制到剪贴板！\n在另一台设备点同步→粘贴→确定即可");
-        const res = prompt("📋 粘贴另一台设备的数据：","");
-        if(res){
-            try{
-                const obj = JSON.parse(res);
-                localStorage.setItem("realData", JSON.stringify(obj.realData||[]));
-                localStorage.setItem("oldData", JSON.stringify(obj.oldData||[]));
-                renderAll();
-                alert("🔄 同步完成！");
-            }catch(e){
-                alert("❌ 数据格式错误");
-            }
-        }
-    });
-}
-
 function renderAll(){
     let real = getReal();
     let old = getOld();
-
     realCheck = new Array(real.length).fill(false);
     oldCheck = new Array(old.length).fill(false);
-
     let html = "";
 
     html += `<div class="section-title">📊 实时数据 共${real.length}条</div>`;
@@ -370,8 +314,8 @@ function renderAll(){
                 <button class="btn-del" onclick="delOld(${i})">删除</button>
             </div>
             <div class="radio-line">
-                <label><input type="radio" name="lock${i}" onchange="setOldLock(${i},false)" ${!item.lock?'checked':''}> 公开</label>
-                <label><input type="radio" name="lock${i}" onchange="setOldLock(${i},true)" ${item.lock?'checked':''}> 加密</label>
+                <label><input type="radio" name="lock${i}" ${!item.lock?'checked':''} onchange="setOldLock(${i},false)">公开</label>
+                <label><input type="radio" name="lock${i}" ${item.lock?'checked':''} onchange="setOldLock(${i},true)">加密</label>
             </div>
         </div>`;
     });
