@@ -15,7 +15,7 @@
             --color-gray: #D6D2C4;
             --color-light: #FFF5EA;
             --color-pink: #F7DAD9;
-            --color-highlight: #ffd6dd; /* 变动记录高亮色 */
+            --color-highlight: #ffd6dd;
         }
         body{
             background: var(--color-light);
@@ -105,12 +105,11 @@
             font-family: Consolas;
             font-size:13px;
             line-height:1.8;
-            display:none; /* 默认隐藏，点击才展开 */
+            display:none;
         }
         .log-content.expanded{
             display:block;
         }
-        /* 变动记录高亮 */
         .log-content .change-line{
             background-color: var(--color-highlight);
             padding:2px 4px;
@@ -209,7 +208,6 @@
     let isUnlocked = false;
     let refreshTimer = null;
 
-    // 处理日志内容，给变动记录加粉色高亮
     function processLogContent(text){
         if (!text) return "暂无日志内容";
         let lines = text.split("\n");
@@ -222,25 +220,23 @@
         return processed.join("\n");
     }
 
-    // 渲染单条日志项（可点击展开）
-    function renderLogItem(item, index){
-        const processedContent = processLogContent(item.content);
-        return `
-        <div class="goods-item">
-            <div class="log-header" onclick="toggleLog('${index}')">
-                <span>📄 日志文件 #${index}</span>
-                <span style="color:var(--color-pink);">点击查看详情 ↓</span>
-            </div>
-            <div class="log-content" id="log-${index}">${processedContent}</div>
-        </div>`;
-    }
-
-    // 核心：点击展开/收起日志内容
     function toggleLog(index){
         const el = document.getElementById(`log-${index}`);
         if (el) {
             el.classList.toggle("expanded");
         }
+    }
+
+    function renderLogItem(item, index){
+        const processedContent = processLogContent(item.content);
+        return `
+        <div class="goods-item">
+            <div class="log-header" onclick="toggleLog('${index}')">
+                <span>📄 ${item.name}</span>
+                <span style="color:var(--color-pink);">点击查看详情 ↓</span>
+            </div>
+            <div class="log-content" id="log-${index}">${processedContent}</div>
+        </div>`;
     }
 
     function renderRealData(){
@@ -266,7 +262,7 @@
                 if(item.lock && !isUnlocked){
                     html += `
                     <div class="goods-item" style="background:#ffeef0;">
-                        🔒 本条日志已加密，解锁后可查看原文
+                        🔒 「${item.name}」已加密，解锁后可查看原文
                     </div>`;
                 }else{
                     html += renderLogItem(item, `old-${index}`);
@@ -297,14 +293,11 @@
         }, t);
     }
 
-    // 初始化
     renderRealData();
     renderOldData();
     initRefresh();
 
-    // 切换刷新间隔
     document.getElementById("refreshSel").onchange = initRefresh;
-    // 筛选
     document.getElementById("plat").onchange = function(){
         renderRealData();
         renderOldData();
