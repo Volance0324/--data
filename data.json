@@ -1,25 +1,13 @@
 {
   "title": "四叶幸运通行证",
   "motto": "下单必中 权重爆棚",
-  "updated": "2026-04-29 18:30:27",
+  "updated": "2026-04-29 18:39:15",
   "list": [
-    {
-      "platform": "iminitv",
-      "type": "线下个人",
-      "sales": 5261,
-      "time": "2026-04-29 18:30:28"
-    },
-    {
-      "platform": "fanme",
-      "type": "线上团签",
-      "sales": 9587,
-      "time": "2026-04-29 18:30:29"
-    },
     {
       "platform": "musicndrama",
       "type": "5/9 OFFLINE",
       "sales": 1484,
-      "time": "2026-04-29 18:30:30"
+      "time": "2026-04-29 18:39:27"
     }
   ]
 }
