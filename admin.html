@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>管理员后台 - 分区管理</title>
+    <title>管理员后台</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -25,7 +25,6 @@
             padding: 20px;
         }
         h3 {
-            color: var(--color-text);
             margin: 15px 0;
             text-align: center;
         }
@@ -35,7 +34,6 @@
             background: var(--color-bg-card);
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
         .upload-box{
             border:2px dashed var(--color-border);
@@ -55,18 +53,16 @@
             background: var(--color-btn);
             color: #fff;
             border: none;
-            padding: 10px 15px;
+            padding: 6px 12px;
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
-            margin:5px 3px;
+            margin:3px;
+            font-size:13px;
         }
-        button:hover {
-            background: var(--color-btn-hover);
-        }
-        .list {
-            margin-top: 20px;
-        }
+        .btn-lock{background:#e8a7b1;}
+        .btn-del{background:#c47c7c;}
+        .list {margin-top: 20px;}
         .good {
             background: #fff;
             padding: 12px;
@@ -74,12 +70,7 @@
             border-radius: 8px;
             border: 1px solid var(--color-border);
         }
-        .tip{
-            font-size:13px;
-            color:#999;
-            margin:10px 0;
-            text-align:center;
-        }
+        .tip{font-size:13px;color:#999;margin:10px 0;text-align:center;}
         .lock-screen{
             position:fixed;top:0;left:0;width:100%;height:100%;
             background:var(--color-bg-main);
@@ -89,19 +80,11 @@
             background:var(--color-bg-card);padding:30px;border-radius:12px;text-align:center;width:300px;
         }
         .section-title{
-            font-size:16px;
-            font-weight:bold;
-            margin:20px 0 10px;
-            text-align:center;
-            color:var(--color-dark);
-        }
-        .radio-box{
-            margin:10px 0;
+            font-size:16px;font-weight:bold;margin:20px 0 10px;text-align:center;
         }
     </style>
 </head>
 <body>
-
 <div class="lock-screen" id="lockScreen">
     <div class="lock-box">
         <h3>🔒 管理员登录</h3>
@@ -111,34 +94,29 @@
 </div>
 
 <div class="container" id="main" style="display:none;">
-    <h3>📂 数据上传管理后台</h3>
+    <h3>📂 数据管理后台</h3>
 
-    <div class="section-title">一、上传到实时数据（全部公开）</div>
+    <div class="section-title">一、上传实时数据（默认公开 不可上锁）</div>
     <div class="upload-box">
         <input type="file" id="fileReal">
-        <div class="tip">支持 log/txt/xlsx/图片 任意格式</div>
-        <button onclick="uploadReal()">解析存入实时数据</button>
+        <div class="tip">log/txt/xlsx 任意格式</div>
+        <button onclick="uploadReal()">解析导入</button>
     </div>
 
-    <div class="section-title">二、上传到往期数据（可选择是否加密）</div>
+    <div class="section-title">二、上传往期数据（上传后手动逐条上锁/解锁）</div>
     <div class="upload-box">
         <input type="file" id="fileOld">
-        <div class="radio-box">
-            <label><input type="radio" name="oldLock" value="0" checked> 公开不加密</label>
-            <label><input type="radio" name="oldLock" value="1"> 加密上锁</label>
-        </div>
-        <div class="tip">任意文件格式，可自主选择是否加密</div>
-        <button onclick="uploadOld()">解析存入往期数据</button>
+        <div class="tip">先上传，下方列表再单独设置锁状态</div>
+        <button onclick="uploadOld()">解析导入往期</button>
     </div>
 
-    <div class="section-title">三、数据列表管理</div>
+    <div class="section-title">三、数据管理列表</div>
     <div class="list" id="list"></div>
 </div>
 
 <script>
-// 已按你要求改好密码
-const ADMIN_PASS = "6666";     // 管理员登录密码
-const OLD_DATA_PASS = "8888";  // 往期解锁密码
+const ADMIN_PASS = "6666";
+const OLD_DATA_PASS = "8888";
 
 const KEY_REAL = "realData";
 const KEY_OLD = "oldData";
@@ -155,7 +133,7 @@ function login(){
         document.getElementById("main").style.display = "block";
         renderAll();
     }else{
-        alert("管理员密码错误");
+        alert("密码错误");
     }
 }
 
@@ -167,17 +145,13 @@ function parseText(content){
         if(!line) return;
         let m = line.match(/(\d{4}.*?\d{2}:\d{2}:\d{2}).*?\[(.+?)\].*?(团体签售|团体)/);
         if(m){
-            res.push({
-                team:"团体签售",
-                plat:"日志",
-                type:m[2],
-                lock:false
-            });
+            res.push({team:"团体签售",plat:"日志",type:m[2],lock:false});
         }
     });
     return res;
 }
 
+// 上传实时
 function uploadReal(){
     let f = document.getElementById("fileReal").files[0];
     if(!f){alert("请选择文件");return;}
@@ -194,7 +168,7 @@ function uploadReal(){
                 d.push({team:i.团体||"未知",plat:i.平台||"日志",type:i.类型||"普通",lock:false});
             });
             saveReal(d);
-            alert("实时数据导入成功："+json.length+"条");
+            alert("导入成功："+json.length+"条");
         }
         return;
     }
@@ -206,15 +180,15 @@ function uploadReal(){
         let d = getReal();
         d.push(...list);
         saveReal(d);
-        alert("实时日志解析成功："+list.length+"条");
+        alert("导入成功："+list.length+"条");
     }
 }
 
+// 上传往期 默认先公开
 function uploadOld(){
     let f = document.getElementById("fileOld").files[0];
     if(!f){alert("请选择文件");return;}
     let name = f.name;
-    let needLock = document.querySelector('input[name="oldLock"]:checked').value === "1";
 
     if(name.match(/\.(xlsx|xls)$/i)){
         let r = new FileReader();
@@ -224,15 +198,11 @@ function uploadOld(){
             let json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
             let d = getOld();
             json.forEach(i=>{
-                d.push({
-                    team:i.团体||"未知",
-                    plat:i.平台||"日志",
-                    type:i.类型||"普通",
-                    lock:needLock
-                });
+                // 默认不上锁，后台后面自己改
+                d.push({team:i.团体||"未知",plat:i.平台||"日志",type:i.类型||"普通",lock:false});
             });
             saveOld(d);
-            alert("往期数据导入成功："+json.length+"条\n"+(needLock?"已设为加密":"已设为公开"));
+            alert("往期导入成功："+json.length+"条，可下方手动上锁");
         }
         return;
     }
@@ -242,42 +212,17 @@ function uploadOld(){
     r.onload = e=>{
         let list = parseText(e.target.result);
         let d = getOld();
-        list.forEach(item=>item.lock = needLock);
         d.push(...list);
         saveOld(d);
-        alert("往期日志解析成功："+list.length+"条\n"+(needLock?"已设为加密":"已设为公开"));
+        alert("往期导入成功："+list.length+"条，可下方手动上锁");
     }
 }
 
-function renderAll(){
-    let real = getReal();
-    let old = getOld();
-    let html = "";
-
-    html += `<div class="section-title">📊 实时数据 共${real.length}条（全部公开）</div>`;
-    real.forEach((it,i)=>{
-        html += `
-        <div class="good">
-            <div>团体：${it.team}</div>
-            <div>平台：${it.plat}</div>
-            <div>类型：${it.type}</div>
-            <button class="del" onclick="delReal(${i})">删除</button>
-        </div>`;
-    });
-
-    html += `<div class="section-title">📁 往期数据 共${old.length}条</div>`;
-    old.forEach((it,i)=>{
-        html += `
-        <div class="good">
-            <div>团体：${it.team}</div>
-            <div>平台：${it.plat}</div>
-            <div>类型：${it.type}</div>
-            <div>状态：${it.lock?"🔒 加密私密":"✅ 公开"}</div>
-            <button class="del" onclick="delOld(${i})">删除</button>
-        </div>`;
-    });
-
-    document.getElementById("list").innerHTML = html;
+// 切换往期单条锁状态
+function toggleOldLock(i){
+    let d = getOld();
+    d[i].lock = !d[i].lock;
+    saveOld(d);
 }
 
 function delReal(i){
@@ -291,6 +236,38 @@ function delOld(i){
     let d = getOld();
     d.splice(i,1);
     saveOld(d);
+}
+
+function renderAll(){
+    let real = getReal();
+    let old = getOld();
+    let html = "";
+
+    html += `<div class="section-title">📊 实时数据（全部公开）共${real.length}条</div>`;
+    real.forEach((it,i)=>{
+        html += `
+        <div class="good">
+            <div>团体：${it.team}</div>
+            <div>平台：${it.plat}</div>
+            <div>类型：${it.type}</div>
+            <button class="btn-del" onclick="delReal(${i})">删除</button>
+        </div>`;
+    });
+
+    html += `<div class="section-title">📁 往期数据（可上锁）共${old.length}条</div>`;
+    old.forEach((it,i)=>{
+        html += `
+        <div class="good">
+            <div>团体：${it.team}</div>
+            <div>平台：${it.plat}</div>
+            <div>类型：${it.type}</div>
+            <div>状态：${it.lock?"🔒 已加密":"✅ 公开"}</div>
+            <button class="btn-lock" onclick="toggleOldLock(${i})">${it.lock?"解锁":"上锁"}</button>
+            <button class="btn-del" onclick="delOld(${i})">删除</button>
+        </div>`;
+    });
+
+    document.getElementById("list").innerHTML = html;
 }
 </script>
 </body>
