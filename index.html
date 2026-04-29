@@ -128,16 +128,6 @@
             border:1px solid #ccc;
             margin:8px 0;
         }
-        .btn-sync-top{
-            display:block;
-            margin:10px auto;
-            padding:8px 20px;
-            background:#27ae60;
-            color:#fff;
-            border:none;
-            border-radius:6px;
-            cursor:pointer;
-        }
     </style>
 </head>
 <body>
@@ -146,8 +136,6 @@
         <div class="title">四叶幸运通行证</div>
         <div class="motto" id="motto"></div>
         <div class="line"></div>
-
-        <button class="btn-sync-top" onclick="frontSync()">🔄 同步数据</button>
 
         <div class="sel-wrap">
             <div class="sel-item">
@@ -207,24 +195,6 @@
     const VIEW_PASS = "8888";
     let isUnlocked = false;
     let refreshTimer = null;
-
-    // 前台同步数据
-    function frontSync(){
-        let pasteStr = prompt("粘贴后台同步过来的全部数据：");
-        if(!pasteStr) return;
-        try{
-            let obj = JSON.parse(pasteStr);
-            localStorage.setItem("realData", JSON.stringify(obj.realData||[]));
-            localStorage.setItem("oldData", JSON.stringify(obj.oldData||[]));
-            isUnlocked = false;
-            document.getElementById("lockArea").style.display = "block";
-            renderRealData();
-            renderOldData();
-            alert("✅ 前台同步完成，数据已更新");
-        }catch(e){
-            alert("❌ 粘贴的数据格式不对");
-        }
-    }
 
     function processLogContent(text){
         if (!text) return "暂无日志内容";
