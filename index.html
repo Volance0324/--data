@@ -211,6 +211,7 @@
 
     // 处理日志内容，给变动记录加粉色高亮
     function processLogContent(text){
+        if (!text) return "暂无日志内容";
         let lines = text.split("\n");
         let processed = lines.map(line => {
             if(line.includes("[变动]")){
@@ -226,17 +227,20 @@
         const processedContent = processLogContent(item.content);
         return `
         <div class="goods-item">
-            <div class="log-header" onclick="toggleLog(${index})">
-                <span>📄 日志文件 #${index+1}</span>
+            <div class="log-header" onclick="toggleLog('${index}')">
+                <span>📄 日志文件 #${index}</span>
                 <span style="color:var(--color-pink);">点击查看详情 ↓</span>
             </div>
             <div class="log-content" id="log-${index}">${processedContent}</div>
         </div>`;
     }
 
+    // 核心：点击展开/收起日志内容
     function toggleLog(index){
         const el = document.getElementById(`log-${index}`);
-        el.classList.toggle("expanded");
+        if (el) {
+            el.classList.toggle("expanded");
+        }
     }
 
     function renderRealData(){
