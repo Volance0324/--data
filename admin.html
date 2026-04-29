@@ -57,7 +57,6 @@
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
-            margin:3px;
             font-size:13px;
         }
         button:hover{
@@ -68,6 +67,10 @@
         }
         .btn-del:hover{
             background:#a86868;
+        }
+        .btn-rename{
+            background:#6799cc;
+            margin-right:5px;
         }
         .list {
             margin-top: 20px;
@@ -80,12 +83,22 @@
             border: 1px solid var(--color-border);
             display:flex;
             flex-direction:column;
-            gap:6px;
+            gap:8px;
         }
         .item-row{
             display:flex;
             align-items:center;
             gap:10px;
+            flex-wrap:wrap;
+        }
+        .name-text{
+            flex:1;
+        }
+        .rename-input{
+            border:1px solid var(--color-border);
+            padding:4px 6px;
+            border-radius:4px;
+            width:180px;
         }
         .tip{
             font-size:13px;
@@ -119,7 +132,6 @@
             text-align:center;
         }
         .radio-line{
-            margin:8px 0;
             display:flex;
             gap:15px;
             align-items:center;
@@ -141,14 +153,14 @@
     <div class="section-title">一、上传实时数据（固定公开）</div>
     <div class="upload-box">
         <input type="file" id="fileReal">
-        <div class="tip">log/txt/xlsx 任意格式 一个文件只算1条</div>
+        <div class="tip">log/txt 任意格式 一个文件只算1条，不拆分多行</div>
         <button onclick="uploadReal()">解析导入</button>
     </div>
 
     <div class="section-title">二、上传往期数据</div>
     <div class="upload-box">
         <input type="file" id="fileOld">
-        <div class="tip">上传只生成1条，不拆分多行，默认公开</div>
+        <div class="tip">上传只生成1条，默认公开，支持自定义改名</div>
         <button onclick="uploadOld()">解析导入往期</button>
     </div>
 
@@ -191,6 +203,7 @@ function readFileToItem(file, cb){
     let reader = new FileReader();
     reader.onload = function(e){
         let item = {
+            name: file.name,
             content: e.target.result,
             lock: false
         };
@@ -233,6 +246,16 @@ function setOldLock(index, val){
     saveOld(arr);
 }
 
+// 改名
+function startRename(type, idx){
+    let arr = type === 'real' ? getReal() : getOld();
+    let newName = prompt("请输入自定义名称：", arr[idx].name);
+    if(newName && newName.trim() !== ""){
+        arr[idx].name = newName.trim();
+        type === 'real' ? saveReal(arr) : saveOld(arr);
+    }
+}
+
 // 必须勾选才能删除
 function delReal(idx, checkboxId){
     let ck = document.getElementById(checkboxId);
@@ -269,7 +292,8 @@ function renderAll(){
         <div class="good">
             <div class="item-row">
                 <input type="checkbox" id="${cid}">
-                <span>实时日志记录 #${i+1}</span>
+                <span class="name-text">📄 ${item.name}</span>
+                <button class="btn-rename" onclick="startRename('real',${i})">✏️改名</button>
                 <button class="btn-del" onclick="delReal(${i},'${cid}')">删除</button>
             </div>
         </div>`;
@@ -282,7 +306,8 @@ function renderAll(){
         <div class="good">
             <div class="item-row">
                 <input type="checkbox" id="${cid}">
-                <span>往期日志记录 #${i+1}</span>
+                <span class="name-text">📄 ${item.name}</span>
+                <button class="btn-rename" onclick="startRename('old',${i})">✏️改名</button>
                 <button class="btn-del" onclick="delOld(${i},'${cid}')">删除</button>
             </div>
             <div class="radio-line">
