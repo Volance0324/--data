@@ -65,15 +65,26 @@
         .btn-del{
             background:#c47c7c;
         }
-        .btn-del:hover{
-            background:#a86868;
-        }
         .btn-rename{
             background:#6799cc;
             margin-right:5px;
         }
+        .btn-batch{
+            background:#e74c3c;
+            margin-bottom:10px;
+        }
+        .btn-batch:disabled{
+            opacity:0.5;
+            cursor:not-allowed;
+        }
+        .top-bar{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            margin-bottom:10px;
+        }
         .list {
-            margin-top: 20px;
+            margin-top: 10px;
         }
         .good {
             background: #fff;
@@ -93,12 +104,6 @@
         }
         .name-text{
             flex:1;
-        }
-        .rename-input{
-            border:1px solid var(--color-border);
-            padding:4px 6px;
-            border-radius:4px;
-            width:180px;
         }
         .tip{
             font-size:13px;
@@ -164,7 +169,13 @@
         <button onclick="uploadOld()">解析导入往期</button>
     </div>
 
-    <div class="section-title">三、数据列表管理 <span style="font-size:12px;color:#999;">(勾选后方可删除)</span></div>
+    <div class="section-title">三、数据列表管理</div>
+
+    <div class="top-bar">
+        <label><input type="checkbox" id="checkAll"> 全选</label>
+        <button class="btn-batch" id="batchDelBtn" disabled onclick="batchDelete()">批量删除选中</button>
+    </div>
+
     <div class="list" id="list"></div>
 </div>
 
@@ -172,6 +183,9 @@
 const ADMIN_PASS = "6666";
 const KEY_REAL = "realData";
 const KEY_OLD = "oldData";
+
+let realCheckList = [];
+let oldCheckList = [];
 
 function getReal(){
     return JSON.parse(localStorage.getItem(KEY_REAL)||"[]");
@@ -256,10 +270,9 @@ function startRename(type, idx){
     }
 }
 
-// 必须勾选才能删除
-function delReal(idx, checkboxId){
-    let ck = document.getElementById(checkboxId);
-    if(!ck.checked){
+// 单条删除（必须勾选）
+function delReal(idx){
+    if(!realCheckList[idx]){
         alert("请先勾选本条数据，再删除");
         return;
     }
@@ -268,9 +281,8 @@ function delReal(idx, checkboxId){
     arr.splice(idx,1);
     saveReal(arr);
 }
-function delOld(idx, checkboxId){
-    let ck = document.getElementById(checkboxId);
-    if(!ck.checked){
+function delOld(idx){
+    if(!oldCheckList[idx]){
         alert("请先勾选本条数据，再删除");
         return;
     }
@@ -280,35 +292,70 @@ function delOld(idx, checkboxId){
     saveOld(arr);
 }
 
+// 全选
+document.getElementById("checkAll").addEventListener("change", function(){
+    let isAll = this.checked;
+    realCheckList.fill(isAll);
+    oldCheckList.fill(isAll);
+    renderAll();
+});
+
+// 批量删除
+function batchDelete(){
+    if(!confirm("确定删除所有选中的数据？")) return;
+
+    // 删除实时选中
+    let realArr = getReal();
+    realArr = realArr.filter((_,i)=>!realCheckList[i]);
+    localStorage.setItem(KEY_REAL,JSON.stringify(realArr));
+
+    // 删除往期选中
+    let oldArr = getOld();
+    oldArr = oldArr.filter((_,i)=>!oldCheckList[i]);
+    localStorage.setItem(KEY_OLD,JSON.stringify(oldArr));
+
+    renderAll();
+}
+
+// 更新批量按钮状态
+function updateBatchBtn(){
+    let hasCheck = realCheckList.some(x=>x) || oldCheckList.some(x=>x);
+    document.getElementById("batchDelBtn").disabled = !hasCheck;
+}
+
 function renderAll(){
     let real = getReal();
     let old = getOld();
+
+    realCheckList = new Array(real.length).fill(false);
+    oldCheckList = new Array(old.length).fill(false);
+
     let html = "";
 
+    // 实时数据
     html += `<div class="section-title">📊 实时数据 共${real.length}条</div>`;
     real.forEach((item,i)=>{
-        let cid = "ck_real_"+i;
         html += `
         <div class="good">
             <div class="item-row">
-                <input type="checkbox" id="${cid}">
+                <input type="checkbox" ${realCheckList[i]?'checked':''} onchange="realCheckList[${i}]=this.checked;updateBatchBtn()">
                 <span class="name-text">📄 ${item.name}</span>
                 <button class="btn-rename" onclick="startRename('real',${i})">✏️改名</button>
-                <button class="btn-del" onclick="delReal(${i},'${cid}')">删除</button>
+                <button class="btn-del" onclick="delReal(${i})">删除</button>
             </div>
         </div>`;
     });
 
+    // 往期数据
     html += `<div class="section-title">📁 往期数据 共${old.length}条</div>`;
     old.forEach((item,i)=>{
-        let cid = "ck_old_"+i;
         html += `
         <div class="good">
             <div class="item-row">
-                <input type="checkbox" id="${cid}">
+                <input type="checkbox" ${oldCheckList[i]?'checked':''} onchange="oldCheckList[${i}]=this.checked;updateBatchBtn()">
                 <span class="name-text">📄 ${item.name}</span>
                 <button class="btn-rename" onclick="startRename('old',${i})">✏️改名</button>
-                <button class="btn-del" onclick="delOld(${i},'${cid}')">删除</button>
+                <button class="btn-del" onclick="delOld(${i})">删除</button>
             </div>
             <div class="radio-line">
                 <label><input type="radio" name="lock${i}" onchange="setOldLock(${i},false)" ${!item.lock?'checked':''}> 公开</label>
@@ -318,6 +365,7 @@ function renderAll(){
     });
 
     document.getElementById("list").innerHTML = html;
+    updateBatchBtn();
 }
 </script>
 </body>
