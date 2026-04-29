@@ -190,16 +190,15 @@
         <div id="realList"></div>
 
         <div class="line"></div>
-        <div style="text-align:center;color:var(--color-dark);">往期历史数据（需密码解锁）</div>
+        <div style="text-align:center;color:var(--color-dark);">往期历史数据</div>
         <div class="line"></div>
 
         <div id="oldLockArea" class="lock-area">
-            <p>🔒 往期数据已加密，请输入密码解锁查看</p>
+            <p>🔒 部分内容已加密，请输入密码解锁查看</p>
             <input type="password" id="oldPwd" placeholder="输入往期数据查看密码">
             <button onclick="unlockOld()">解锁查看</button>
         </div>
-
-        <div id="oldList" style="display:none;"></div>
+        <div id="oldList"></div>
     </div>
 
 <script>
@@ -213,7 +212,6 @@
     let idx = today.charCodeAt(0) % mottoList.length;
     document.getElementById("motto").innerText = mottoList[idx];
 
-    // 往期解锁密码已改成 8888
     const OLD_DATA_PASS = "8888";
     let oldUnlocked = false;
 
@@ -257,13 +255,18 @@
             html = "<div style='text-align:center;color:#ccc;padding:20px;'>暂无往期数据</div>";
         }else{
             data.forEach(it=>{
-                let cls = it.type.includes("线上") ? "type-online" : it.type.includes("线下") ? "type-offline" : "type-photo";
-                html += `
-                <div class="goods-item">
-                    <div class="platform">[${it.plat}]</div>
-                    <div class="${cls}">${it.type}</div>
-                    <div style="margin-top:6px;">团体：${it.team}</div>
-                </div>`;
+                // 加密且未解锁：隐藏
+                if(it.lock && !oldUnlocked){
+                    html += `<div class="goods-item" style="background:#ffeef0;color:#a97c83;">🔒 本条内容已加密</div>`;
+                }else{
+                    let cls = it.type.includes("线上") ? "type-online" : it.type.includes("线下") ? "type-offline" : "type-photo";
+                    html += `
+                    <div class="goods-item">
+                        <div class="platform">[${it.plat}]</div>
+                        <div class="${cls}">${it.type}</div>
+                        <div style="margin-top:6px;">团体：${it.team}</div>
+                    </div>`;
+                }
             });
         }
         document.getElementById("oldList").innerHTML = html;
@@ -274,9 +277,8 @@
         if(val === OLD_DATA_PASS){
             oldUnlocked = true;
             document.getElementById("oldLockArea").style.display = "none";
-            document.getElementById("oldList").style.display = "block";
             renderOld();
-            alert("✅ 往期数据解锁成功");
+            alert("✅ 解锁成功，已显示全部加密内容");
         }else{
             alert("❌ 密码错误");
         }
