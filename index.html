@@ -190,14 +190,16 @@
         <div id="realList"></div>
 
         <div class="line"></div>
-        <div style="text-align:center;color:var(--color-dark);">往期历史数据</div>
+        <div style="text-align:center;color:var(--color-dark);">往期历史数据（需密码解锁）</div>
         <div class="line"></div>
 
+        <!-- 修复后的解锁模块，不会被挤掉 -->
         <div id="oldLockArea" class="lock-area">
             <p>🔒 部分内容已加密，请输入密码解锁查看</p>
             <input type="password" id="oldPwd" placeholder="输入往期数据查看密码">
             <button onclick="unlockOld()">解锁查看</button>
         </div>
+
         <div id="oldList"></div>
     </div>
 
@@ -212,6 +214,7 @@
     let idx = today.charCodeAt(0) % mottoList.length;
     document.getElementById("motto").innerText = mottoList[idx];
 
+    // 往期解锁密码
     const OLD_DATA_PASS = "8888";
     let oldUnlocked = false;
 
@@ -255,7 +258,7 @@
             html = "<div style='text-align:center;color:#ccc;padding:20px;'>暂无往期数据</div>";
         }else{
             data.forEach(it=>{
-                // 加密且未解锁：隐藏
+                // 加密且未解锁：只显示加密提示
                 if(it.lock && !oldUnlocked){
                     html += `<div class="goods-item" style="background:#ffeef0;color:#a97c83;">🔒 本条内容已加密</div>`;
                 }else{
@@ -284,17 +287,22 @@
         }
     }
 
+    // 初始化渲染
     renderReal();
+    renderOld();
+
+    // 筛选联动
     document.getElementById("plat").onchange = renderReal;
     document.getElementById("type").onchange = renderReal;
 
+    // 自动刷新
     let timer;
     function setAutoRefresh(){
         clearInterval(timer);
         let ms = parseInt(document.getElementById("refresh").value);
         timer = setInterval(()=>{
             renderReal();
-            if(oldUnlocked) renderOld();
+            renderOld();
         }, ms);
     }
     setAutoRefresh();
