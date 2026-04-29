@@ -24,6 +24,7 @@
             padding: 15px;
             background-color: #252526;
             border-radius: 12px;
+            overflow-x: hidden;
         }
         .title {
             color: #ff79c6;
@@ -32,10 +33,17 @@
             font-weight: bold;
             margin-bottom: 8px;
         }
+        /* 改成绿色虚线分隔线 */
         .divider {
             color: #6a9955;
             margin: 8px 0;
             text-align: center;
+            border-bottom: 2px dashed #6a9955;
+            line-height: 1px;
+        }
+        .divider span {
+            background-color: #252526;
+            padding: 0 10px;
         }
         .slogan {
             color: #ff79c6;
@@ -108,13 +116,14 @@
             word-break: break-all;
         }
 
-        /* 手机端适配 */
+        /* 手机端强制适配 */
         @media (max-width: 600px) {
             body {
                 padding: 5px;
             }
             .container {
                 padding: 12px;
+                width: 100%;
             }
             .title {
                 font-size: 18px;
@@ -137,16 +146,17 @@
             }
             .log-line {
                 font-size: 14px;
+                width: 100%;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="divider">====================================================</div>
+        <div class="divider"></div>
         <div class="title">四叶幸运通行证</div>
         <div class="slogan" id="luckyText">下单必中 权重爆棚</div>
-        <div class="divider">====================================================</div>
+        <div class="divider"></div>
 
         <div class="select-bar">
             <div class="select-item">
@@ -187,9 +197,9 @@
         <div class="status-line"><span class="status">✅ 面板状态：</span>正常运行</div>
         <div class="status-line"><span class="info-text">🕒 最后更新：</span><span class="time-text" id="lastUpdate">--</span></div>
 
-        <div class="divider">====================================================</div>
+        <div class="divider"></div>
         <div class="info-text" style="text-align:center;"> 签售销量数据列表 </div>
-        <div class="divider">====================================================</div>
+        <div class="divider"></div>
 
         <div id="logArea"></div>
     </div>
@@ -279,5 +289,7 @@
         loadCSV();
         setRefresh();
     </script>
+</body>
+</html>
 </body>
 </html>
