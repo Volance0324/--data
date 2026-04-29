@@ -5,7 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>四叶幸运通行证</title>
     <style>
-        *{margin:0;padding:0;box-sizing:border-box;}
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
         :root {
             --color-dark: #968C83;
             --color-gray: #D6D2C4;
@@ -83,28 +87,16 @@
             border-radius:8px;
             word-break:break-all;
         }
-        .platform{
-            color: var(--color-dark);
-            font-weight:bold;
-        }
-        .type-online{
-            color: #7A9E9F;
-        }
-        .type-offline{
-            color: #D4A373;
-        }
-        .type-photo{
-            color: var(--color-pink);
-        }
-
-        .section{
-            margin:30px 0;
-        }
-        .section h4{
-            font-size:16px;
-            margin-bottom:10px;
-            padding-bottom:6px;
-            border-bottom:2px dashed var(--color-pink);
+        .log-text{
+            margin-top:10px;
+            padding:12px;
+            background:#ffffff;
+            border:1px solid var(--color-gray);
+            border-radius:6px;
+            white-space: pre-wrap;
+            font-family: Consolas;
+            font-size:13px;
+            line-height:1.8;
         }
         .lock-area{
             padding:15px;
@@ -128,13 +120,8 @@
             border-radius:6px;
             cursor:pointer;
         }
-
-        @media (max-width:600px){
-            body{padding:5px;}
-            .box{padding:12px;}
-            .sel-wrap{flex-direction:column;align-items:flex-start;gap:10px;}
-            .sel-item{width:100%;justify-content:space-between;}
-            select{width:60%;}
+        button:hover{
+            opacity:0.9;
         }
     </style>
 </head>
@@ -150,13 +137,6 @@
                 <span>平台：</span>
                 <select id="plat">
                     <option value="全部">全部平台</option>
-                    <option value="ktown4u">ktown4u</option>
-                    <option value="iminitv">iminitv</option>
-                    <option value="fanme">fanme</option>
-                    <option value="itta">itta</option>
-                    <option value="musicndrama">musicndrama</option>
-                    <option value="beatroad">beatroad</option>
-                    <option value="mokket">mokket</option>
                     <option value="日志">日志</option>
                 </select>
             </div>
@@ -164,16 +144,12 @@
                 <span>类型：</span>
                 <select id="type">
                     <option value="全部">全部</option>
-                    <option value="线上签售">线上签售</option>
-                    <option value="线下签售">线下签售</option>
-                    <option value="合影">合影</option>
-                    <option value="无变动">无变动</option>
-                    <option value="变动">变动</option>
+                    <option value="日志记录">日志记录</option>
                 </select>
             </div>
             <div class="sel-item">
                 <span>刷新间隔：</span>
-                <select id="refresh">
+                <select id="refreshSel">
                     <option value="10000">10秒</option>
                     <option value="30000" selected>30秒</option>
                     <option value="60000">1分钟</option>
@@ -181,23 +157,22 @@
             </div>
         </div>
 
-        <div class="info-row"><span style="color:#7A9E9F;">✅ 面板状态：正常运行</span></div>
-        <div class="info-row"><span style="color:var(--color-dark);">🕒 自动刷新中</span></div>
+        <div class="info-row"><span style="color:#7A9E9F;">✅ 面板正常运行中</span></div>
+        <div class="info-row"><span style="color:var(--color-dark);">🕒 自动实时刷新</span></div>
 
         <div class="line"></div>
-        <div style="text-align:center;color:var(--color-dark);">实时数据（公开查看）</div>
+        <div style="text-align:center;color:var(--color-dark);font-weight:bold;">实时数据（公开查看）</div>
         <div class="line"></div>
         <div id="realList"></div>
 
         <div class="line"></div>
-        <div style="text-align:center;color:var(--color-dark);">往期历史数据（需密码解锁）</div>
+        <div style="text-align:center;color:var(--color-dark);font-weight:bold;">往期历史数据</div>
         <div class="line"></div>
 
-        <!-- 修复后的解锁模块，不会被挤掉 -->
-        <div id="oldLockArea" class="lock-area">
-            <p>🔒 部分内容已加密，请输入密码解锁查看</p>
-            <input type="password" id="oldPwd" placeholder="输入往期数据查看密码">
-            <button onclick="unlockOld()">解锁查看</button>
+        <div id="lockArea" class="lock-area">
+            <p>🔒 部分往期内容已加密，请输入密码解锁</p>
+            <input type="password" id="pwdInput" placeholder="输入查看密码">
+            <button onclick="unlockData()">解锁查看</button>
         </div>
 
         <div id="oldList"></div>
@@ -210,64 +185,46 @@
         "四叶加持 次次都中",
         "只要下单 绝不落空"
     ];
-    const today = new Date().toDateString();
-    let idx = today.charCodeAt(0) % mottoList.length;
-    document.getElementById("motto").innerText = mottoList[idx];
+    document.getElementById("motto").innerText = mottoList[0];
 
-    // 往期解锁密码
-    const OLD_DATA_PASS = "8888";
-    let oldUnlocked = false;
+    const VIEW_PASS = "8888";
+    let isUnlocked = false;
+    let refreshTimer = null;
 
-    function filterData(list, platVal, typeVal){
-        return list.filter(it=>{
-            let matchPlat = platVal === "全部" || it.plat === platVal;
-            let matchType = typeVal === "全部" || it.type === typeVal;
-            return matchPlat && matchType;
-        });
-    }
-
-    function renderReal(){
-        let plat = document.getElementById("plat").value;
-        let type = document.getElementById("type").value;
-        let data = JSON.parse(localStorage.getItem("realData")||"[]");
-        let filtered = filterData(data, plat, type);
+    function renderRealData(){
+        let arr = JSON.parse(localStorage.getItem("realData")||"[]");
         let html = "";
-        if(filtered.length === 0){
-            html = "<div style='text-align:center;color:#ccc;padding:20px;'>暂无实时数据</div>";
+        if(arr.length <= 0){
+            html = '<div style="text-align:center;color:#999;padding:20px;">暂无实时日志数据</div>';
         }else{
-            filtered.forEach(it=>{
-                let cls = "";
-                if(it.type.includes("线上")) cls = "type-online";
-                else if(it.type.includes("线下")) cls = "type-offline";
-                else cls = "type-photo";
+            arr.forEach(item=>{
                 html += `
                 <div class="goods-item">
-                    <div class="platform">[${it.plat}]</div>
-                    <div class="${cls}">${it.type}</div>
-                    <div style="margin-top:6px;">团体：${it.team}</div>
+                    <div>📄 实时日志文件</div>
+                    <div class="log-text">${item.content}</div>
                 </div>`;
             });
         }
         document.getElementById("realList").innerHTML = html;
     }
 
-    function renderOld(){
-        let data = JSON.parse(localStorage.getItem("oldData")||"[]");
+    function renderOldData(){
+        let arr = JSON.parse(localStorage.getItem("oldData")||"[]");
         let html = "";
-        if(data.length === 0){
-            html = "<div style='text-align:center;color:#ccc;padding:20px;'>暂无往期数据</div>";
+        if(arr.length <= 0){
+            html = '<div style="text-align:center;color:#999;padding:20px;">暂无往期日志数据</div>';
         }else{
-            data.forEach(it=>{
-                // 加密且未解锁：只显示加密提示
-                if(it.lock && !oldUnlocked){
-                    html += `<div class="goods-item" style="background:#ffeef0;color:#a97c83;">🔒 本条内容已加密</div>`;
+            arr.forEach(item=>{
+                if(item.lock && !isUnlocked){
+                    html += `
+                    <div class="goods-item" style="background:#ffeef0;">
+                        🔒 本条日志已加密，解锁后可查看原文
+                    </div>`;
                 }else{
-                    let cls = it.type.includes("线上") ? "type-online" : it.type.includes("线下") ? "type-offline" : "type-photo";
                     html += `
                     <div class="goods-item">
-                        <div class="platform">[${it.plat}]</div>
-                        <div class="${cls}">${it.type}</div>
-                        <div style="margin-top:6px;">团体：${it.team}</div>
+                        <div>📄 往期日志文件</div>
+                        <div class="log-text">${item.content}</div>
                     </div>`;
                 }
             });
@@ -275,38 +232,43 @@
         document.getElementById("oldList").innerHTML = html;
     }
 
-    function unlockOld(){
-        let val = document.getElementById("oldPwd").value;
-        if(val === OLD_DATA_PASS){
-            oldUnlocked = true;
-            document.getElementById("oldLockArea").style.display = "none";
-            renderOld();
-            alert("✅ 解锁成功，已显示全部加密内容");
+    function unlockData(){
+        let pwd = document.getElementById("pwdInput").value.trim();
+        if(pwd === VIEW_PASS){
+            isUnlocked = true;
+            document.getElementById("lockArea").style.display = "none";
+            renderOldData();
+            alert("✅ 解锁成功，已显示全部加密日志内容");
         }else{
             alert("❌ 密码错误");
         }
     }
 
-    // 初始化渲染
-    renderReal();
-    renderOld();
-
-    // 筛选联动
-    document.getElementById("plat").onchange = renderReal;
-    document.getElementById("type").onchange = renderReal;
-
-    // 自动刷新
-    let timer;
-    function setAutoRefresh(){
-        clearInterval(timer);
-        let ms = parseInt(document.getElementById("refresh").value);
-        timer = setInterval(()=>{
-            renderReal();
-            renderOld();
-        }, ms);
+    function initRefresh(){
+        if(refreshTimer) clearInterval(refreshTimer);
+        let t = parseInt(document.getElementById("refreshSel").value);
+        refreshTimer = setInterval(()=>{
+            renderRealData();
+            renderOldData();
+        }, t);
     }
-    setAutoRefresh();
-    document.getElementById("refresh").onchange = setAutoRefresh;
+
+    // 初始化
+    renderRealData();
+    renderOldData();
+    initRefresh();
+
+    // 切换刷新间隔
+    document.getElementById("refreshSel").onchange = initRefresh;
+    // 筛选
+    document.getElementById("plat").onchange = function(){
+        renderRealData();
+        renderOldData();
+    };
+    document.getElementById("type").onchange = function(){
+        renderRealData();
+        renderOldData();
+    };
 </script>
 </body>
 </html>
