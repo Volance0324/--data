@@ -78,6 +78,14 @@
             margin: 10px 0;
             border-radius: 8px;
             border: 1px solid var(--color-border);
+            display:flex;
+            flex-direction:column;
+            gap:6px;
+        }
+        .item-row{
+            display:flex;
+            align-items:center;
+            gap:10px;
         }
         .tip{
             font-size:13px;
@@ -144,7 +152,7 @@
         <button onclick="uploadOld()">解析导入往期</button>
     </div>
 
-    <div class="section-title">三、数据列表管理</div>
+    <div class="section-title">三、数据列表管理 <span style="font-size:12px;color:#999;">(勾选后方可删除)</span></div>
     <div class="list" id="list"></div>
 </div>
 
@@ -225,14 +233,25 @@ function setOldLock(index, val){
     saveOld(arr);
 }
 
-function delReal(idx){
-    if(!confirm("确定删除？")) return;
+// 必须勾选才能删除
+function delReal(idx, checkboxId){
+    let ck = document.getElementById(checkboxId);
+    if(!ck.checked){
+        alert("请先勾选本条数据，再删除");
+        return;
+    }
+    if(!confirm("确定删除本条数据？")) return;
     let arr = getReal();
     arr.splice(idx,1);
     saveReal(arr);
 }
-function delOld(idx){
-    if(!confirm("确定删除？")) return;
+function delOld(idx, checkboxId){
+    let ck = document.getElementById(checkboxId);
+    if(!ck.checked){
+        alert("请先勾选本条数据，再删除");
+        return;
+    }
+    if(!confirm("确定删除本条数据？")) return;
     let arr = getOld();
     arr.splice(idx,1);
     saveOld(arr);
@@ -245,23 +264,31 @@ function renderAll(){
 
     html += `<div class="section-title">📊 实时数据 共${real.length}条</div>`;
     real.forEach((item,i)=>{
+        let cid = "ck_real_"+i;
         html += `
         <div class="good">
-            <div>实时日志记录</div>
-            <button class="btn-del" onclick="delReal(${i})">删除</button>
+            <div class="item-row">
+                <input type="checkbox" id="${cid}">
+                <span>实时日志记录 #${i+1}</span>
+                <button class="btn-del" onclick="delReal(${i},'${cid}')">删除</button>
+            </div>
         </div>`;
     });
 
     html += `<div class="section-title">📁 往期数据 共${old.length}条</div>`;
     old.forEach((item,i)=>{
+        let cid = "ck_old_"+i;
         html += `
         <div class="good">
-            <div>往期日志记录</div>
+            <div class="item-row">
+                <input type="checkbox" id="${cid}">
+                <span>往期日志记录 #${i+1}</span>
+                <button class="btn-del" onclick="delOld(${i},'${cid}')">删除</button>
+            </div>
             <div class="radio-line">
                 <label><input type="radio" name="lock${i}" onchange="setOldLock(${i},false)" ${!item.lock?'checked':''}> 公开</label>
                 <label><input type="radio" name="lock${i}" onchange="setOldLock(${i},true)" ${item.lock?'checked':''}> 加密</label>
             </div>
-            <button class="btn-del" onclick="delOld(${i})">删除</button>
         </div>`;
     });
 
