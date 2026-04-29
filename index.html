@@ -6,12 +6,11 @@
     <title>四叶幸运通行证</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;}
-        /* 奶雾粉咖 配色定义 */
         :root {
-            --color-dark: #968C83;    /* 咖色主色 */
-            --color-gray: #D6D2C4;    /* 浅米色 */
-            --color-light: #FFF5EA;   /* 奶杏色 */
-            --color-pink: #F7DAD9;    /* 奶雾粉色 */
+            --color-dark: #968C83;
+            --color-gray: #D6D2C4;
+            --color-light: #FFF5EA;
+            --color-pink: #F7DAD9;
         }
         body{
             background: var(--color-light);
@@ -87,17 +86,13 @@
             font-weight:bold;
         }
         .type-online{
-            color: #7A9E9F; /* 柔和的浅蓝，适配整体温柔风格 */
+            color: #7A9E9F;
         }
         .type-offline{
-            color: #D4A373; /* 暖棕，适配咖色调 */
+            color: #D4A373;
         }
         .type-photo{
             color: var(--color-pink);
-        }
-        .goods-item a{
-            color: var(--color-dark);
-            text-decoration:none;
         }
 
         @media (max-width:600px){
@@ -128,6 +123,7 @@
                     <option value="musicndrama">musicndrama</option>
                     <option value="beatroad">beatroad</option>
                     <option value="mokket">mokket</option>
+                    <option value="图片">图片</option>
                 </select>
             </div>
             <div class="sel-item">
@@ -137,6 +133,7 @@
                     <option value="线上签售">线上签售</option>
                     <option value="线下签售">线下签售</option>
                     <option value="合影">合影</option>
+                    <option value="图片">图片</option>
                 </select>
             </div>
             <div class="sel-item">
@@ -179,11 +176,12 @@
             goods.forEach(item=>{
                 if(pVal!="全部" && item.plat!=pVal) return;
                 if(tVal!="全部" && item.type!=tVal) return;
+
                 html += `
                 <div class="goods-item">
                     <div class="platform">[${item.plat}]</div>
                     <div class="${item.type=="线上签售"?"type-online":item.type=="线下签售"?"type-offline":"type-photo"}">${item.type}</div>
-                    <div><a href="${item.link}" target="_blank">打开商品链接</a></div>
+                    <div style="margin-top:6px;color:#666;">团体：${item.team}</div>
                 </div>
                 `;
             });
