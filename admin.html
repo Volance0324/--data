@@ -2,65 +2,156 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理员后台</title>
+    <title>管理员后台 - 文档管理</title>
     <style>
-        *{margin:0;padding:0;box-sizing:border-box;}
-        body{background:#1e1e1e;color:#fff;font-family:Microsoft Yahei;padding:20px;}
-        .admin-box{max-width:450px;margin:0 auto;background:#252526;padding:25px;border-radius:12px;border:1px solid #333;}
-        h2{text-align:center;color:#ff79c6;margin-bottom:20px;}
-        select,input{width:100%;padding:12px;margin:10px 0;background:#333;border:1px solid #555;border-radius:6px;color:#fff;font-size:16px;}
-        button{width:100%;padding:12px;background:#ff79c6;color:#111;border:none;border-radius:6px;font-size:16px;font-weight:bold;margin-top:10px;}
-        .logout{text-align:center;margin-top:15px;}
-        .logout a{color:#ff79c6;text-decoration:none;}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+        .title {
+            margin-bottom: 20px;
+            color: #222;
+        }
+        .upload-area {
+            border: 2px dashed #42b983;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        #fileInput {
+            margin-bottom: 15px;
+        }
+        button {
+            padding: 8px 16px;
+            background: #42b983;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #359469;
+        }
+        .file-list {
+            margin-top: 20px;
+        }
+        .file-item {
+            padding: 12px;
+            border: 1px solid #eee;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 6px;
+        }
+        .delete-btn {
+            background: #f56c6c;
+        }
     </style>
 </head>
 <body>
-    <div class="admin-box">
-        <h2>添加商品链接</h2>
-        <select id="plat">
-            <option value="ktown4u">ktown4u</option>
-            <option value="iminitv">iminitv</option>
-            <option value="fanme">fanme</option>
-            <option value="itta">itta</option>
-            <option value="musicndrama">musicndrama</option>
-            <option value="beatroad">beatroad</option>
-            <option value="mokket">mokket</option>
-        </select>
-        <select id="type">
-            <option value="线上签售">线上签售</option>
-            <option value="线下签售">线下签售</option>
-            <option value="合影">合影</option>
-        </select>
-        <input type="text" id="link" placeholder="粘贴商品链接">
-        <button onclick="addGoods()">提交添加</button>
-        <div class="logout"><a href="#" onclick="logout()">退出登录</a></div>
+    <h1 class="title">文档管理（上传后前端自动显示）</h1>
+
+    <div class="upload-area">
+        <input type="file" id="fileInput" multiple>
+        <br><br>
+        <button onclick="uploadFiles()">上传文档</button>
     </div>
 
+    <div class="file-list" id="fileList"></div>
+
     <script>
-        if(localStorage.getItem("isLogin")!=="yes"){
-            location.href="login.html";
+        // 读取本地存储的文件列表
+        function getFiles() {
+            return JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
         }
 
-        function addGoods(){
-            let plat = document.getElementById("plat").value;
-            let type = document.getElementById("type").value;
-            let link = document.getElementById("link").value.trim();
-            if(!link){
-                alert("请输入商品链接");
+        // 保存文件列表
+        function saveFiles(files) {
+            localStorage.setItem('uploadedFiles', JSON.stringify(files));
+            renderList();
+        }
+
+        // 上传
+        function uploadFiles() {
+            const input = document.getElementById('fileInput');
+            const files = Array.from(input.files);
+
+            if (files.length === 0) {
+                alert('请选择文件');
                 return;
             }
-            let goods = JSON.parse(localStorage.getItem("goodsData")) || [];
-            goods.push({plat,type,link});
-            localStorage.setItem("goodsData",JSON.stringify(goods));
-            alert("添加成功！前台自动同步");
-            document.getElementById("link").value="";
+
+            const existing = getFiles();
+
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const newFile = {
+                        name: file.name,
+                        size: file.size,
+                        type: file.type,
+                        url: e.target.result,
+                        id: Date.now() + Math.random()
+                    };
+                    existing.push(newFile);
+                    saveFiles(existing);
+                };
+                reader.readAsDataURL(file);
+            });
+
+            alert('上传成功！前端页面已自动更新');
+            input.value = '';
         }
 
-        function logout(){
-            localStorage.removeItem("isLogin");
-            location.href="login.html";
+        // 渲染列表
+        function renderList() {
+            const list = document.getElementById('fileList');
+            const files = getFiles();
+            list.innerHTML = '<h3>已上传文档</h3><br>';
+
+            if (files.length === 0) {
+                list.innerHTML += '<p>暂无文档</p>';
+                return;
+            }
+
+            files.forEach(file => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = `
+                    <div>
+                        <strong>${file.name}</strong>
+                        <br>
+                        <small>${formatSize(file.size)}</small>
+                    </div>
+                    <button class="delete-btn" onclick="deleteFile('${file.id}')">删除</button>
+                `;
+                list.appendChild(item);
+            });
         }
+
+        // 删除
+        function deleteFile(id) {
+            const files = getFiles().filter(f => f.id !== id);
+            saveFiles(files);
+        }
+
+        // 格式化大小
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            else return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+
+        window.onload = renderList;
     </script>
 </body>
 </html>
