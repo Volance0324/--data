@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KMS 库存监控 - 实时状态面板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            font-family: Consolas, "Courier New", monospace;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .terminal-container {
+            max-width: 900px;
+            margin: 0 auto;
+            border: 1px solid #333;
+            padding: 15px;
+            background-color: #252526;
+            border-radius: 4px;
+        }
+        .divider {
+            color: #6a9955;
+        }
+        .status {
+            color: #4ec9b0;
+        }
+        .info-text {
+            color: #9cdcfe;
+        }
+        .time-text {
+            color: #ce9178;
+        }
+        /* 桃粉色高亮，专门标涨幅数字 */
+        .data-highlight {
+            color: #ff79c6;
+            font-weight: bold;
+        }
+        .log-line {
+            margin: 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal-container">
+        <div class="divider">====================================================</div>
+        <div class="divider">  KMS库存监控 - 实时状态面板  </div>
+        <div class="divider">====================================================</div>
+
+        <div class="log-line"><span class="status">✅ 脚本状态:</span> 运行中</div>
+        <div class="log-line"><span class="status">🌐 接口状态:</span> 正常</div>
+        <div class="log-line"><span class="info-text">🕒 最后成功获取:</span> <span class="time-text">2026-02-06 00:01:29</span></div>
+        <div class="log-line"><span class="info-text">⏱️ 刷新间隔:</span> 30秒</div>
+        <div class="log-line"><span class="info-text">📂 原有日志路径:</span> C:\Users\HP\Desktop\kms_stock_logs</div>
+        <div class="log-line"><span class="info-text">📂 新数据独立文档:</span> C:\Users\HP\Desktop\kms_stock_new_data\2026-02-05_库存数据.txt</div>
+
+        <div class="divider">====================================================</div>
+        <div class="info-text"> 当前库存数据: </div>
+        <div class="divider">====================================================</div>
+
+        <!-- 这里的数据会从data.csv自动加载 -->
+        <div id="logArea"></div>
+    </div>
+
+    <script>
+        // 加载并解析CSV数据
+        function loadCSV() {
+            fetch('data.csv')
+                .then(res => res.text())
+                .then(text => {
+                    const rows = text.trim().split('\n');
+                    const logArea = document.getElementById('logArea');
+                    logArea.innerHTML = '';
+
+                    for (let i = 1; i < rows.length; i++) {
+                        const cells = rows[i].split(',');
+                        if (cells.length >= 5) {
+                            const time = cells[0];
+                            const info = cells[1];
+                            const stock = cells[2];
+                            const delta = cells[3];
+                            const updateTime = cells[4];
+
+                            // 把涨幅数字标成桃粉色
+                            const line = `
+                                <div class="log-line">
+                                    <span class="time-text">${time}</span> - 
+                                    <span class="info-text">INFO - ${info}</span>
+                                    库存: <span class="data-highlight">${stock}</span> 
+                                    时间: <span class="time-text">${updateTime}</span>
+                                    今日涨幅: <span class="data-highlight">${delta}</span>
+                                </div>
+                            `;
+                            logArea.innerHTML += line;
+                        }
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('logArea').innerHTML = `<div class="log-line" style="color:#ff6b6b;">⚠️ 加载数据失败，请检查文件路径</div>`;
+                });
+        }
+
+        // 页面加载时执行，每30秒自动刷新
+        loadCSV();
+        setInterval(loadCSV, 30000);
+    </script>
+</body>
+</html>
