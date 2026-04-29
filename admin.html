@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>管理员后台 - 权限管理</title>
+    <title>管理员后台 - 分区管理</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -26,7 +26,7 @@
         }
         h3 {
             color: var(--color-text);
-            margin-bottom: 20px;
+            margin: 15px 0;
             text-align: center;
         }
         .container {
@@ -55,17 +55,17 @@
             background: var(--color-btn);
             color: #fff;
             border: none;
-            padding: 10px 20px;
+            padding: 10px 15px;
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
-            margin:5px;
+            margin:5px 3px;
         }
         button:hover {
             background: var(--color-btn-hover);
         }
         .list {
-            margin-top: 30px;
+            margin-top: 20px;
         }
         .good {
             background: #fff;
@@ -73,20 +73,6 @@
             margin: 10px 0;
             border-radius: 8px;
             border: 1px solid var(--color-border);
-        }
-        .del {
-            background: #c47c7c;
-            font-size:12px;
-            padding:4px 8px;
-            border-radius:4px;
-            margin-top:8px;
-        }
-        .lock{
-            background: #e8a7b1;
-            font-size:12px;
-            padding:4px 8px;
-            border-radius:4px;
-            margin-top:8px;
         }
         .tip{
             font-size:13px;
@@ -102,6 +88,13 @@
         .lock-box{
             background:var(--color-bg-card);padding:30px;border-radius:12px;text-align:center;width:300px;
         }
+        .section-title{
+            font-size:16px;
+            font-weight:bold;
+            margin:20px 0 10px;
+            text-align:center;
+            color:var(--color-dark);
+        }
     </style>
 </head>
 <body>
@@ -115,142 +108,181 @@
 </div>
 
 <div class="container" id="main" style="display:none;">
-    <h3>📂 文件上传 & 权限管理（支持.log/.txt/xlsx/图片）</h3>
+    <h3>📂 数据上传管理后台</h3>
+
+    <div class="section-title">一、上传到实时数据（公开）</div>
     <div class="upload-box">
-        <input type="file" id="file">
-        <div class="tip">支持任意文件：.log/.txt/.xlsx/.xls/图片<br>单文件建议≤5MB</div>
-        <button onclick="upload()">解析并导入</button>
+        <input type="file" id="fileReal">
+        <div class="tip">支持 log/txt/xlsx/图片 任意格式</div>
+        <button onclick="uploadReal()">解析存入实时数据</button>
     </div>
 
+    <div class="section-title">二、上传到往期数据（加密需密码）</div>
+    <div class="upload-box">
+        <input type="file" id="fileOld">
+        <div class="tip">上传历史日志，自动归入加密往期板块</div>
+        <button onclick="uploadOld()">解析存入往期数据</button>
+    </div>
+
+    <div class="section-title">三、数据列表管理</div>
     <div class="list" id="list"></div>
 </div>
 
 <script>
-// ========== 管理员密码 ==========
-const ADMIN_PASS = "admin123";
-// ========== 内容查看密码（给客户的） ==========
-const CONTENT_PASS = "123456";
+// 密码配置
+const ADMIN_PASS = "admin123";     // 管理员后台密码
+const OLD_DATA_PASS = "666888";    // 往期数据查看独立密码
 
-const KEY = "goodsData";
+const KEY_REAL = "realData";
+const KEY_OLD = "oldData";
 
-function getData(){
-    return JSON.parse(localStorage.getItem(KEY)||"[]");
-}
-function save(d){
-    localStorage.setItem(KEY,JSON.stringify(d));
-    render();
-}
+// 读写
+function getReal(){return JSON.parse(localStorage.getItem(KEY_REAL)||"[]");}
+function saveReal(arr){localStorage.setItem(KEY_REAL,JSON.stringify(arr));renderAll();}
+function getOld(){return JSON.parse(localStorage.getItem(KEY_OLD)||"[]");}
+function saveOld(arr){localStorage.setItem(KEY_OLD,JSON.stringify(arr));renderAll();}
 
+// 管理员登录
 function login(){
     let v = document.getElementById("pwd").value;
     if(v === ADMIN_PASS){
         document.getElementById("lockScreen").style.display = "none";
         document.getElementById("main").style.display = "block";
-        render();
+        renderAll();
     }else{
-        alert("密码错误");
+        alert("管理员密码错误");
     }
 }
 
-function upload(){
-    let f = document.getElementById("file").files[0];
-    if(!f){alert("请选择文件");return}
-    let n = f.name;
-
-    // 大小提醒
-    if(f.size > 5*1024*1024){
-        alert("文件超过5MB，可能无法正常保存/解析");
-    }
-
-    if(n.match(/\.(jpg|png|jpeg)$/i)){
-        let r = new FileReader();
-        r.readAsDataURL(f);
-        r.onload = e=>{
-            let d = getData();
-            d.push({team:"图片",plat:"图片",type:"图片",lock:false});
-            save(d);
-            alert("上传成功");
+// 解析文本通用方法
+function parseText(content){
+    let lines = content.split(/\r?\n/);
+    let res = [];
+    lines.forEach(line=>{
+        line = line.trim();
+        if(!line) return;
+        let m = line.match(/(\d{4}.*?\d{2}:\d{2}:\d{2}).*?\[(.+?)\].*?(团体签售|团体)/);
+        if(m){
+            res.push({
+                team:"团体签售",
+                plat:"日志",
+                type:m[2],
+                lock:false
+            });
         }
-        return;
-    }
+    });
+    return res;
+}
 
-    if(n.match(/\.(xlsx|xls)$/i)){
+// 上传实时
+function uploadReal(){
+    let f = document.getElementById("fileReal").files[0];
+    if(!f){alert("请选择文件");return;}
+    let name = f.name;
+
+    if(name.match(/\.(xlsx|xls)$/i)){
         let r = new FileReader();
         r.readAsArrayBuffer(f);
         r.onload = e=>{
             let wb = XLSX.read(new Uint8Array(e.target.result),{type:"array"});
-            let data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            let d = getData();
-            data.forEach(i=>{
-                d.push({
-                    team:i.团体||i.team||"未知",
-                    plat:i.平台||i.plat||"未知",
-                    type:i.类型||i.type||"线上签售",
-                    lock:false
-                });
+            let json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+            let d = getReal();
+            json.forEach(i=>{
+                d.push({team:i.团体||"未知",plat:i.平台||"日志",type:i.类型||"普通",lock:false});
             });
-            save(d);
-            alert("导入成功："+data.length+"条");
+            saveReal(d);
+            alert("实时数据导入成功："+json.length+"条");
         }
         return;
     }
 
-    // log/txt/其他文本
+    // log/txt/其他
     let r = new FileReader();
     r.readAsText(f);
     r.onload = e=>{
-        let t = e.target.result;
-        let lines = t.split(/\r?\n/);
-        let d = getData();
-        let cnt = 0;
-        lines.forEach(line=>{
-            line = line.trim();
-            if(!line) return;
-            // 你的日志格式：时间 - [状态] ...团体签售
-            let m = line.match(/(\d{4}.*?\d{2}:\d{2}:\d{2}).*?\[(.+?)\].*?(团体签售|团体)/);
-            if(m){
-                d.push({
-                    team:"团体签售",
-                    plat:"日志",
-                    type:m[2]||"无变动",
-                    lock:false
-                });
-                cnt++;
-            }
-        });
-        save(d);
-        alert("解析成功："+cnt+"条（未匹配的行忽略）");
+        let list = parseText(e.target.result);
+        let d = getReal();
+        d.push(...list);
+        saveReal(d);
+        alert("实时日志解析成功："+list.length+"条");
     }
 }
 
-function render(){
-    let d = getData();
+// 上传往期
+function uploadOld(){
+    let f = document.getElementById("fileOld").files[0];
+    if(!f){alert("请选择文件");return;}
+    let name = f.name;
+
+    if(name.match(/\.(xlsx|xls)$/i)){
+        let r = new FileReader();
+        r.readAsArrayBuffer(f);
+        r.onload = e=>{
+            let wb = XLSX.read(new Uint8Array(e.target.result),{type:"array"});
+            let json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+            let d = getOld();
+            json.forEach(i=>{
+                d.push({team:i.团体||"未知",plat:i.平台||"日志",type:i.类型||"普通",lock:false});
+            });
+            saveOld(d);
+            alert("往期数据导入成功："+json.length+"条");
+        }
+        return;
+    }
+
+    let r = new FileReader();
+    r.readAsText(f);
+    r.onload = e=>{
+        let list = parseText(e.target.result);
+        let d = getOld();
+        d.push(...list);
+        saveOld(d);
+        alert("往期日志解析成功："+list.length+"条");
+    }
+}
+
+// 渲染全部
+function renderAll(){
+    let real = getReal();
+    let old = getOld();
     let html = "";
-    d.forEach((it,i)=>{
-        html+=`
+
+    html += `<div class="section-title">📊 实时数据 共${real.length}条</div>`;
+    real.forEach((it,i)=>{
+        html += `
         <div class="good">
             <div>团体：${it.team}</div>
             <div>平台：${it.plat}</div>
             <div>类型：${it.type}</div>
-            <div>状态：${it.lock?"🔒 已上锁":"✅ 公开"}</div>
-            <button class="del" onclick="del(${i})">删除</button>
-            <button class="lock" onclick="toggleLock(${i})">${it.lock?"解锁":"上锁"}</button>
+            <button class="del" onclick="delReal(${i})">删除</button>
         </div>`;
     });
-    document.getElementById("list").innerHTML = html || '<div class="tip">暂无数据</div>';
+
+    html += `<div class="section-title">📁 往期加密数据 共${old.length}条</div>`;
+    old.forEach((it,i)=>{
+        html += `
+        <div class="good">
+            <div>团体：${it.team}</div>
+            <div>平台：${it.plat}</div>
+            <div>类型：${it.type}</div>
+            <button class="del" onclick="delOld(${i})">删除</button>
+        </div>`;
+    });
+
+    document.getElementById("list").innerHTML = html;
 }
 
-function del(i){
+function delReal(i){
     if(!confirm("确定删除？"))return;
-    let d = getData();
+    let d = getReal();
     d.splice(i,1);
-    save(d);
+    saveReal(d);
 }
-
-function toggleLock(i){
-    let d = getData();
-    d[i].lock = !d[i].lock;
-    save(d);
+function delOld(i){
+    if(!confirm("确定删除？"))return;
+    let d = getOld();
+    d.splice(i,1);
+    saveOld(d);
 }
 </script>
 </body>
