@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多平台·最新下单团监控面板</title>
+    <title>签售平台销量监控</title>
     <style>
         * {
             margin: 0;
@@ -25,8 +25,11 @@
             background-color: #252526;
             border-radius: 6px;
         }
-        .top-select-bar {
+        .select-wrap {
             margin-bottom: 15px;
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
         }
         select {
             padding: 6px 12px;
@@ -34,7 +37,7 @@
             color: #ff79c6;
             border: 1px solid #555;
             border-radius: 4px;
-            font-size: 16px;
+            font-size: 15px;
             font-family: inherit;
         }
         .divider {
@@ -54,16 +57,14 @@
             color: #f92672;
             font-weight: bold;
         }
-        .group-name {
-            color: #a6e22e;
-            font-weight: bold;
-        }
-        .member-name {
+        .type-online {
             color: #8be9fd;
-            font-weight: bold;
         }
-        .order-status {
+        .type-offline {
             color: #ffb86c;
+        }
+        .sales-high {
+            color: #ff79c6;
             font-weight: bold;
         }
         .log-line {
@@ -76,102 +77,111 @@
 <body>
     <div class="terminal-container">
         <div class="divider">====================================================</div>
-        <div class="divider"> 📊 多平台·最新下单团监控面板 </div>
+        <div class="divider"> 📊 签售销量监控面板 </div>
         <div class="divider">====================================================</div>
 
-        <!-- 平台选择下拉框 -->
-        <div class="top-select-bar">
-            <span class="info-text">选择平台：</span>
-            <select id="platformSel">
-                <option value="ALL">全部平台</option>
-                <option value="ktown4u">ktown4u</option>
-                <option value="iminitv">iminitv</option>
-                <option value="fanme">fanme</option>
-                <option value="kmonstarorg">kmonstarorg</option>
-                <option value="kmonstatw">kmonstatw</option>
-                <option value="kmonstartw">kmonstartw</option>
-                <option value="itta">itta</option>
-                <option value="musicndrama">musicndrama</option>
-                <option value="beatroad">beatroad</option>
-                <option value="mokket">mokket</option>
-            </select>
+        <!-- 双选择框：平台 + 刷新间隔 -->
+        <div class="select-wrap">
+            <div>
+                <span class="info-text">选择平台：</span>
+                <select id="platformSel">
+                    <option value="ALL">全部平台</option>
+                    <option value="ktown4u">ktown4u</option>
+                    <option value="iminitv">iminitv</option>
+                    <option value="fanme">fanme</option>
+                    <option value="kmonstarorg">kmonstarorg</option>
+                    <option value="kmonstatw">kmonstatw</option>
+                    <option value="kmonstartw">kmonstartw</option>
+                    <option value="itta">itta</option>
+                    <option value="musicndrama">musicndrama</option>
+                    <option value="beatroad">beatroad</option>
+                    <option value="mokket">mokket</option>
+                </select>
+            </div>
+            <div>
+                <span class="info-text">刷新间隔：</span>
+                <select id="refreshSel">
+                    <option value="10000">10秒</option>
+                    <option value="30000" selected>30秒</option>
+                    <option value="60000">1分钟</option>
+                </select>
+            </div>
         </div>
 
-        <div class="log-line"><span class="status">✅ 面板状态:</span> 运行中</div>
-        <div class="log-line"><span class="status">🌐 数据接口:</span> 正常</div>
-        <div class="log-line"><span class="info-text">🕒 最后更新:</span> <span class="time-text" id="lastUpdate">--</span></div>
-        <div class="log-line"><span class="info-text">⏱️ 刷新间隔:</span> 30秒</div>
+        <div class="log-line"><span class="status">✅ 面板状态：</span>正常运行</div>
+        <div class="log-line"><span class="info-text">🕒 最后更新：</span><span class="time-text" id="lastUpdate">--</span></div>
 
         <div class="divider">====================================================</div>
-        <div class="info-text"> 最近下单团列表（按时间倒序）: </div>
+        <div class="info-text"> 签售销量数据列表 </div>
         <div class="divider">====================================================</div>
 
         <div id="logArea"></div>
     </div>
 
     <script>
-        let allOrders = [];
+        let allData = [];
+        let refreshTimer = null;
 
-        // 加载CSV数据
+        // 加载数据
         function loadCSV() {
             fetch('data.csv')
                 .then(res => res.text())
                 .then(text => {
-                    const rows = text.trim().split('\n');
-                    allOrders = rows;
-                    renderOrders();
-                    // 更新最后更新时间
+                    allData = text.trim().split('\n');
+                    renderData();
                     const now = new Date().toLocaleString();
                     document.getElementById('lastUpdate').textContent = now;
                 })
-                .catch(err => {
+                .catch(() => {
                     document.getElementById('logArea').innerHTML = 
-                        `<div class="log-line" style="color:#ff6b6b;">⚠️ 加载数据失败，请检查data.csv文件</div>`;
+                    '<div class="log-line" style="color:#ff6b6b;">⚠️ 读取数据失败，请检查data.csv文件</div>';
                 });
         }
 
-        // 渲染筛选后的订单数据
-        function renderOrders() {
-            const selectedPlatform = document.getElementById('platformSel').value;
-            const logArea = document.getElementById('logArea');
-            logArea.innerHTML = '';
+        // 渲染列表
+        function renderData() {
+            let sel = document.getElementById('platformSel').value;
+            let area = document.getElementById('logArea');
+            area.innerHTML = '';
 
-            // 跳过表头，从第2行开始读取数据
-            for (let i = 1; i < allOrders.length; i++) {
-                const cells = allOrders[i].split(',');
-                if (cells.length < 6) continue;
+            for(let i=1; i<allData.length; i++){
+                let arr = allData[i].split(',');
+                if(arr.length < 4) continue;
 
-                const platform = cells[0];
-                const group = cells[1];
-                const member = cells[2];
-                const orderTime = cells[3];
-                const orderStatus = cells[4];
-                const remark = cells[5];
+                let p = arr[0];
+                let kind = arr[1];
+                let sales = arr[2];
+                let time = arr[3];
 
-                // 平台筛选
-                if (selectedPlatform !== "ALL" && platform !== selectedPlatform) continue;
+                if(sel !== 'ALL' && p !== sel) continue;
 
-                // 生成订单行
-                const line = `
-                    <div class="log-line">
-                        <span class="platform-tag">[${platform}]</span> 
-                        <span class="group-name">团: ${group}</span> / 
-                        <span class="member-name">成员: ${member}</span> | 
-                        <span class="time-text">下单时间: ${orderTime}</span> - 
-                        <span class="order-status">状态: ${orderStatus}</span> 
-                        <span class="info-text">备注: ${remark}</span>
-                    </div>
+                let typeClass = kind === '线上团签' ? 'type-online' : 'type-offline';
+                let line = `
+                <div class="log-line">
+                    <span class="platform-tag">[${p}]</span>
+                    <span class="${typeClass}">${kind}</span>
+                    销量：<span class="sales-high">${sales}</span>
+                    记录时间：<span class="time-text">${time}</span>
+                </div>
                 `;
-                logArea.innerHTML += line;
+                area.innerHTML += line;
             }
         }
 
-        // 监听平台选择变化
-        document.getElementById('platformSel').addEventListener('change', renderOrders);
+        // 设置自动刷新
+        function setRefresh() {
+            if(refreshTimer) clearInterval(refreshTimer);
+            let gap = parseInt(document.getElementById('refreshSel').value);
+            refreshTimer = setInterval(loadCSV, gap);
+        }
 
-        // 页面加载时执行，每30秒自动刷新
+        // 监听切换
+        document.getElementById('platformSel').addEventListener('change', renderData);
+        document.getElementById('refreshSel').addEventListener('change', setRefresh);
+
+        // 初始化
         loadCSV();
-        setInterval(loadCSV, 30000);
+        setRefresh();
     </script>
 </body>
 </html>
