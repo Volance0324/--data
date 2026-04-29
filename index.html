@@ -17,6 +17,7 @@
             color: var(--color-dark);
             font-family:Microsoft Yahei,Consolas;
             padding:10px;
+            min-height: 100vh;
         }
         .box{
             max-width:100%;
@@ -26,6 +27,7 @@
             border-radius:12px;
             padding:15px;
             overflow-x:hidden;
+            min-height: calc(100vh - 20px);
         }
         .title{
             color: var(--color-dark);
@@ -95,6 +97,38 @@
             color: var(--color-pink);
         }
 
+        .section{
+            margin:30px 0;
+        }
+        .section h4{
+            font-size:16px;
+            margin-bottom:10px;
+            padding-bottom:6px;
+            border-bottom:2px dashed var(--color-pink);
+        }
+        .lock-area{
+            padding:15px;
+            background:#ffeef0;
+            border-radius:8px;
+            text-align:center;
+            margin:10px 0;
+        }
+        input{
+            width:100%;
+            padding:10px;
+            border-radius:6px;
+            border:1px solid #ccc;
+            margin:8px 0;
+        }
+        button{
+            padding:8px 20px;
+            background:var(--color-dark);
+            color:#fff;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+        }
+
         @media (max-width:600px){
             body{padding:5px;}
             .box{padding:12px;}
@@ -123,7 +157,7 @@
                     <option value="musicndrama">musicndrama</option>
                     <option value="beatroad">beatroad</option>
                     <option value="mokket">mokket</option>
-                    <option value="图片">图片</option>
+                    <option value="日志">日志</option>
                 </select>
             </div>
             <div class="sel-item">
@@ -133,7 +167,8 @@
                     <option value="线上签售">线上签售</option>
                     <option value="线下签售">线下签售</option>
                     <option value="合影">合影</option>
-                    <option value="图片">图片</option>
+                    <option value="无变动">无变动</option>
+                    <option value="变动">变动</option>
                 </select>
             </div>
             <div class="sel-item">
@@ -150,60 +185,117 @@
         <div class="info-row"><span style="color:var(--color-dark);">🕒 自动刷新中</span></div>
 
         <div class="line"></div>
-        <div style="text-align:center;color:var(--color-dark);">签售商品列表</div>
+        <div style="text-align:center;color:var(--color-dark);">实时数据（公开查看）</div>
+        <div class="line"></div>
+        <div id="realList"></div>
+
+        <div class="line"></div>
+        <div style="text-align:center;color:var(--color-dark);">往期历史数据（需密码解锁）</div>
         <div class="line"></div>
 
-        <div id="list"></div>
+        <div id="oldLockArea" class="lock-area">
+            <p>🔒 往期数据已加密，请输入密码解锁查看</p>
+            <input type="password" id="oldPwd" placeholder="输入往期数据查看密码">
+            <button onclick="unlockOld()">解锁查看</button>
+        </div>
+
+        <div id="oldList" style="display:none;"></div>
     </div>
 
-    <script>
-        const mottoList = [
-            "买的全中 好运拉满",
-            "下单必中 权重爆棚",
-            "四叶加持 次次都中",
-            "只要下单 绝不落空"
-        ];
-        const today = new Date().toDateString();
-        let idx = today.charCodeAt(0) % mottoList.length;
-        document.getElementById("motto").innerText = mottoList[idx];
+<script>
+    const mottoList = [
+        "买的全中 好运拉满",
+        "下单必中 权重爆棚",
+        "四叶加持 次次都中",
+        "只要下单 绝不落空"
+    ];
+    const today = new Date().toDateString();
+    let idx = today.charCodeAt(0) % mottoList.length;
+    document.getElementById("motto").innerText = mottoList[idx];
 
-        let goods = JSON.parse(localStorage.getItem("goodsData")) || [];
+    const OLD_DATA_PASS = "666888";
+    let oldUnlocked = false;
 
-        function render(){
-            let pVal = document.getElementById("plat").value;
-            let tVal = document.getElementById("type").value;
-            let html = "";
-            goods.forEach(item=>{
-                if(pVal!="全部" && item.plat!=pVal) return;
-                if(tVal!="全部" && item.type!=tVal) return;
+    function filterData(list, platVal, typeVal){
+        return list.filter(it=>{
+            let matchPlat = platVal === "全部" || it.plat === platVal;
+            let matchType = typeVal === "全部" || it.type === typeVal;
+            return matchPlat && matchType;
+        });
+    }
 
+    function renderReal(){
+        let plat = document.getElementById("plat").value;
+        let type = document.getElementById("type").value;
+        let data = JSON.parse(localStorage.getItem("realData")||"[]");
+        let filtered = filterData(data, plat, type);
+        let html = "";
+        if(filtered.length === 0){
+            html = "<div style='text-align:center;color:#ccc;padding:20px;'>暂无实时数据</div>";
+        }else{
+            filtered.forEach(it=>{
+                let cls = "";
+                if(it.type.includes("线上")) cls = "type-online";
+                else if(it.type.includes("线下")) cls = "type-offline";
+                else cls = "type-photo";
                 html += `
                 <div class="goods-item">
-                    <div class="platform">[${item.plat}]</div>
-                    <div class="${item.type=="线上签售"?"type-online":item.type=="线下签售"?"type-offline":"type-photo"}">${item.type}</div>
-                    <div style="margin-top:6px;color:#666;">团体：${item.team}</div>
-                </div>
-                `;
+                    <div class="platform">[${it.plat}]</div>
+                    <div class="${cls}">${it.type}</div>
+                    <div style="margin-top:6px;">团体：${it.team}</div>
+                </div>`;
             });
-            document.getElementById("list").innerHTML = html||"<div style='text-align:center;color:var(--color-gray);'>暂无商品</div>";
         }
+        document.getElementById("realList").innerHTML = html;
+    }
 
-        document.getElementById("plat").onchange = render;
-        document.getElementById("type").onchange = render;
-
-        let timer;
-        function setRefresh(){
-            clearInterval(timer);
-            let t = parseInt(document.getElementById("refresh").value);
-            timer = setInterval(()=>{
-                goods = JSON.parse(localStorage.getItem("goodsData")) || [];
-                render();
-            },t);
+    function renderOld(){
+        let data = JSON.parse(localStorage.getItem("oldData")||"[]");
+        let html = "";
+        if(data.length === 0){
+            html = "<div style='text-align:center;color:#ccc;padding:20px;'>暂无往期数据</div>";
+        }else{
+            data.forEach(it=>{
+                let cls = it.type.includes("线上") ? "type-online" : it.type.includes("线下") ? "type-offline" : "type-photo";
+                html += `
+                <div class="goods-item">
+                    <div class="platform">[${it.plat}]</div>
+                    <div class="${cls}">${it.type}</div>
+                    <div style="margin-top:6px;">团体：${it.team}</div>
+                </div>`;
+            });
         }
-        document.getElementById("refresh").onchange = setRefresh;
+        document.getElementById("oldList").innerHTML = html;
+    }
 
-        render();
-        setRefresh();
-    </script>
+    function unlockOld(){
+        let val = document.getElementById("oldPwd").value;
+        if(val === OLD_DATA_PASS){
+            oldUnlocked = true;
+            document.getElementById("oldLockArea").style.display = "none";
+            document.getElementById("oldList").style.display = "block";
+            renderOld();
+            alert("✅ 往期数据解锁成功");
+        }else{
+            alert("❌ 密码错误");
+        }
+    }
+
+    renderReal();
+    document.getElementById("plat").onchange = renderReal;
+    document.getElementById("type").onchange = renderReal;
+
+    let timer;
+    function setAutoRefresh(){
+        clearInterval(timer);
+        let ms = parseInt(document.getElementById("refresh").value);
+        timer = setInterval(()=>{
+            renderReal();
+            if(oldUnlocked) renderOld();
+        }, ms);
+    }
+    setAutoRefresh();
+    document.getElementById("refresh").onchange = setAutoRefresh;
+</script>
 </body>
 </html>
