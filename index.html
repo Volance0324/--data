@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>四叶幸运通行证</title>
     <style>
         * {
@@ -14,7 +14,7 @@
             background-color: #1e1e1e;
             color: #d4d4d4;
             font-family: Consolas, "Courier New", monospace;
-            padding: 20px;
+            padding: 15px;
             line-height: 1.8;
         }
         .terminal-container {
@@ -23,16 +23,22 @@
             border: 1px solid #333;
             padding: 20px;
             background-color: #252526;
-            border-radius: 6px;
+            border-radius: 12px;
         }
         .select-wrap {
-            margin-bottom: 15px;
+            margin: 20px 0;
             display: flex;
             gap: 20px;
             flex-wrap: wrap;
+            justify-content: center;
+        }
+        .select-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         select {
-            padding: 6px 12px;
+            padding: 8px 12px;
             background: #333;
             color: #ff79c6;
             border: 1px solid #555;
@@ -43,11 +49,12 @@
         .divider {
             color: #6a9955;
             margin: 8px 0;
+            text-align: center;
         }
         .lucky-slogan {
             color: #ff79c6;
             text-align: center;
-            font-size: 16px;
+            font-size: 18px;
             margin-bottom: 12px;
             font-weight: bold;
         }
@@ -79,16 +86,34 @@
             padding-left: 10px;
             border-left: 2px solid #333;
         }
+
+        /* 手机端适配 */
+        @media (max-width: 600px) {
+            .select-wrap {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .lucky-slogan {
+                font-size: 16px;
+            }
+            body {
+                padding: 10px;
+            }
+            .terminal-container {
+                padding: 15px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="terminal-container">
         <div class="divider">====================================================</div>
-        <div class="lucky-slogan" id="luckyText">买的全中 好运拉满</div>
+        <div class="lucky-slogan" id="luckyText">下单必中 权重爆棚</div>
         <div class="divider">====================================================</div>
 
         <div class="select-wrap">
-            <div>
+            <div class="select-item">
                 <span class="info-text">选择平台：</span>
                 <select id="platformSel">
                     <option value="ALL">全部平台</option>
@@ -104,15 +129,15 @@
                     <option value="mokket">mokket</option>
                 </select>
             </div>
-            <div>
-                <span class="info-text">合影类型：</span>
+            <div class="select-item">
+                <span class="info-text">类型：线上/线下/合影</span>
                 <select id="typeSel">
                     <option value="ALL">全部</option>
                     <option value="线上合影">线上合影</option>
                     <option value="线下合影">线下合影</option>
                 </select>
             </div>
-            <div>
+            <div class="select-item">
                 <span class="info-text">刷新间隔：</span>
                 <select id="refreshSel">
                     <option value="10000">10秒</option>
@@ -126,7 +151,7 @@
         <div class="log-line"><span class="info-text">🕒 最后更新：</span><span class="time-text" id="lastUpdate">--</span></div>
 
         <div class="divider">====================================================</div>
-        <div class="info-text"> 签售销量数据列表 </div>
+        <div class="info-text" style="text-align:center;"> 签售销量数据列表 </div>
         <div class="divider">====================================================</div>
 
         <div id="logArea"></div>
@@ -136,7 +161,6 @@
         let allData = [];
         let refreshTimer = null;
 
-        // 好运语录库 买的全中系列
         const luckyWords = [
             "买的全中 好运拉满",
             "下单必中 权重爆棚",
@@ -148,7 +172,6 @@
             "一路全中 接单无忧"
         ];
 
-        // 按日期随机选一句 每天固定不乱跳
         function setLuckySlogan() {
             const today = new Date().toDateString();
             const seed = today.charCodeAt(0) + today.charCodeAt(4) + today.charCodeAt(9);
@@ -212,7 +235,6 @@
         document.getElementById('typeSel').addEventListener('change', renderData);
         document.getElementById('refreshSel').addEventListener('change', setRefresh);
 
-        // 初始化
         setLuckySlogan();
         loadCSV();
         setRefresh();
