@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员后台</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{background:#1e1e1e;color:#fff;font-family:Microsoft Yahei;padding:20px;}
+        .admin-box{max-width:450px;margin:0 auto;background:#252526;padding:25px;border-radius:12px;border:1px solid #333;}
+        h2{text-align:center;color:#ff79c6;margin-bottom:20px;}
+        select,input{width:100%;padding:12px;margin:10px 0;background:#333;border:1px solid #555;border-radius:6px;color:#fff;font-size:16px;}
+        button{width:100%;padding:12px;background:#ff79c6;color:#111;border:none;border-radius:6px;font-size:16px;font-weight:bold;margin-top:10px;}
+        .logout{text-align:center;margin-top:15px;}
+        .logout a{color:#ff79c6;text-decoration:none;}
+    </style>
+</head>
+<body>
+    <div class="admin-box">
+        <h2>添加商品链接</h2>
+        <select id="plat">
+            <option value="ktown4u">ktown4u</option>
+            <option value="iminitv">iminitv</option>
+            <option value="fanme">fanme</option>
+            <option value="itta">itta</option>
+            <option value="musicndrama">musicndrama</option>
+            <option value="beatroad">beatroad</option>
+            <option value="mokket">mokket</option>
+        </select>
+        <select id="type">
+            <option value="线上签售">线上签售</option>
+            <option value="线下签售">线下签售</option>
+            <option value="合影">合影</option>
+        </select>
+        <input type="text" id="link" placeholder="粘贴商品链接">
+        <button onclick="addGoods()">提交添加</button>
+        <div class="logout"><a href="#" onclick="logout()">退出登录</a></div>
+    </div>
+
+    <script>
+        if(localStorage.getItem("isLogin")!=="yes"){
+            location.href="login.html";
+        }
+
+        function addGoods(){
+            let plat = document.getElementById("plat").value;
+            let type = document.getElementById("type").value;
+            let link = document.getElementById("link").value.trim();
+            if(!link){
+                alert("请输入商品链接");
+                return;
+            }
+            let goods = JSON.parse(localStorage.getItem("goodsData")) || [];
+            goods.push({plat,type,link});
+            localStorage.setItem("goodsData",JSON.stringify(goods));
+            alert("添加成功！前台自动同步");
+            document.getElementById("link").value="";
+        }
+
+        function logout(){
+            localStorage.removeItem("isLogin");
+            location.href="login.html";
+        }
+    </script>
+</body>
+</html>

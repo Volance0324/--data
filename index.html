@@ -5,188 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>四叶幸运通行证</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            background-color: #1e1e1e;
-            color: #d4d4d4;
-            font-family: Consolas, "Courier New", monospace;
-            padding: 10px;
-            line-height: 1.6;
-        }
-        .container {
-            max-width: 100%;
-            margin: 0 auto;
-            border: 1px solid #333;
-            padding: 15px;
-            background-color: #252526;
-            border-radius: 12px;
-            overflow-x: hidden;
-        }
-        .title {
-            color: #ff79c6;
-            text-align: center;
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-        /* 改成绿色虚线分隔线 */
-        .divider {
-            color: #6a9955;
-            margin: 8px 0;
-            text-align: center;
-            border-bottom: 2px dashed #6a9955;
-            line-height: 1px;
-        }
-        .divider span {
-            background-color: #252526;
-            padding: 0 10px;
-        }
-        .slogan {
-            color: #ff79c6;
-            text-align: center;
-            font-size: 17px;
-            margin-bottom: 12px;
-            font-weight: bold;
-        }
-        .select-bar {
-            margin: 15px 0;
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .select-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .select-item label {
-            color: #9cdcfe;
-            font-size: 15px;
-        }
-        select {
-            padding: 6px 10px;
-            background: #333;
-            color: #ff79c6;
-            border: 1px solid #555;
-            border-radius: 4px;
-            font-size: 14px;
-            font-family: inherit;
-            max-width: 130px;
-        }
-        .status-line {
-            margin: 6px 0;
-            padding-left: 10px;
-            border-left: 2px solid #333;
-        }
-        .status {
-            color: #4ec9b0;
-        }
-        .info-text {
-            color: #9cdcfe;
-        }
-        .time-text {
-            color: #ce9178;
-        }
-        .platform-tag {
-            color: #f92672;
-            font-weight: bold;
-        }
-        .type-online {
-            color: #8be9fd;
-        }
-        .type-offline {
-            color: #ffb86c;
-        }
-        .type-photo {
-            color: #ff79c6;
-        }
-        .sales-high {
-            color: #ff79c6;
-            font-weight: bold;
-        }
-        .log-line {
-            margin: 6px 0;
-            padding-left: 10px;
-            border-left: 2px solid #333;
-            word-break: break-all;
-        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{background:#1e1e1e;color:#d4d4d4;font-family:Microsoft Yahei,Consolas;padding:10px;}
+        .box{max-width:100%;margin:0 auto;background:#252526;border:1px solid #333;border-radius:12px;padding:15px;overflow-x:hidden;}
+        .title{color:#ff79c6;text-align:center;font-size:20px;font-weight:bold;margin-bottom:8px;}
+        .line{margin:10px 0;border-bottom:2px dashed #6a9955;}
+        .motto{color:#ff79c6;text-align:center;font-size:17px;font-weight:bold;margin:8px 0;}
+        .sel-wrap{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin:15px 0;}
+        .sel-item{display:flex;align-items:center;gap:6px;}
+        .sel-item span{color:#9cdcfe;font-size:15px;}
+        select{background:#333;color:#ff79c6;border:1px solid #555;border-radius:6px;padding:5px 8px;font-size:14px;}
+        .info-row{margin:6px 0;padding-left:10px;border-left:2px solid #333;}
+        .goods-item{margin:8px 0;padding:10px;background:#2c2c2c;border-radius:8px;word-break:break-all;}
+        .platform{color:#f92672;font-weight:bold;}
+        .type-online{color:#8be9fd;}
+        .type-offline{color:#ffb86c;}
+        .type-photo{color:#ff79c6;}
+        .goods-item a{color:#9cdcfe;text-decoration:none;}
+        .login-btn{text-align:center;margin:10px 0;}
+        .login-btn a{color:#ff79c6;text-decoration:none;border:1px solid #ff79c6;padding:6px 12px;border-radius:6px;}
 
-        /* 手机端强制适配 */
-        @media (max-width: 600px) {
-            body {
-                padding: 5px;
-            }
-            .container {
-                padding: 12px;
-                width: 100%;
-            }
-            .title {
-                font-size: 18px;
-            }
-            .slogan {
-                font-size: 16px;
-            }
-            .select-bar {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            .select-item {
-                width: 100%;
-                justify-content: space-between;
-            }
-            select {
-                width: 60%;
-                max-width: none;
-            }
-            .log-line {
-                font-size: 14px;
-                width: 100%;
-            }
+        @media (max-width:600px){
+            body{padding:5px;}
+            .box{padding:12px;}
+            .sel-wrap{flex-direction:column;align-items:flex-start;gap:10px;}
+            .sel-item{width:100%;justify-content:space-between;}
+            select{width:60%;}
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="divider"></div>
+    <div class="box">
+        <div class="line"></div>
         <div class="title">四叶幸运通行证</div>
-        <div class="slogan" id="luckyText">下单必中 权重爆棚</div>
-        <div class="divider"></div>
+        <div class="motto" id="motto"></div>
+        <div class="line"></div>
 
-        <div class="select-bar">
-            <div class="select-item">
-                <label>平台：</label>
-                <select id="platformSel">
-                    <option value="ALL">全部平台</option>
+        <div class="sel-wrap">
+            <div class="sel-item">
+                <span>平台：</span>
+                <select id="plat">
+                    <option value="全部">全部平台</option>
                     <option value="ktown4u">ktown4u</option>
                     <option value="iminitv">iminitv</option>
                     <option value="fanme">fanme</option>
-                    <option value="kmonstarorg">kmonstarorg</option>
-                    <option value="kmonstatw">kmonstatw</option>
-                    <option value="kmonstartw">kmonstartw</option>
                     <option value="itta">itta</option>
                     <option value="musicndrama">musicndrama</option>
                     <option value="beatroad">beatroad</option>
                     <option value="mokket">mokket</option>
                 </select>
             </div>
-            <div class="select-item">
-                <label>类型：</label>
-                <select id="typeSel">
-                    <option value="ALL">全部</option>
+            <div class="sel-item">
+                <span>类型：</span>
+                <select id="type">
+                    <option value="全部">全部</option>
                     <option value="线上签售">线上签售</option>
                     <option value="线下签售">线下签售</option>
                     <option value="合影">合影</option>
                 </select>
             </div>
-            <div class="select-item">
-                <label>刷新间隔：</label>
-                <select id="refreshSel">
+            <div class="sel-item">
+                <span>刷新间隔：</span>
+                <select id="refresh">
                     <option value="10000">10秒</option>
                     <option value="30000" selected>30秒</option>
                     <option value="60000">1分钟</option>
@@ -194,102 +74,67 @@
             </div>
         </div>
 
-        <div class="status-line"><span class="status">✅ 面板状态：</span>正常运行</div>
-        <div class="status-line"><span class="info-text">🕒 最后更新：</span><span class="time-text" id="lastUpdate">--</span></div>
+        <div class="info-row"><span style="color:#4ec9b0;">✅ 面板状态：正常运行</span></div>
+        <div class="info-row"><span style="color:#9cdcfe;">🕒 自动刷新中</span></div>
 
-        <div class="divider"></div>
-        <div class="info-text" style="text-align:center;"> 签售销量数据列表 </div>
-        <div class="divider"></div>
+        <div class="line"></div>
+        <div style="text-align:center;color:#9cdcfe;">签售商品列表</div>
+        <div class="line"></div>
 
-        <div id="logArea"></div>
+        <div id="list"></div>
+
+        <div class="login-btn">
+            <a href="login.html">管理员登录</a>
+        </div>
     </div>
 
     <script>
-        let allData = [];
-        let refreshTimer = null;
-
-        const luckyWords = [
+        const mottoList = [
             "买的全中 好运拉满",
             "下单必中 权重爆棚",
             "四叶加持 次次都中",
-            "只要下单 绝不落空",
-            "签售稳稳中 运气一直红",
-            "全网最优权重 买啥都能中",
-            "幸运通关 每单必中",
-            "一路全中 接单无忧"
+            "只要下单 绝不落空"
         ];
+        const today = new Date().toDateString();
+        let idx = today.charCodeAt(0) % mottoList.length;
+        document.getElementById("motto").innerText = mottoList[idx];
 
-        function setLuckySlogan() {
-            const today = new Date().toDateString();
-            const seed = today.charCodeAt(0) + today.charCodeAt(4) + today.charCodeAt(9);
-            const idx = seed % luckyWords.length;
-            document.getElementById('luckyText').innerText = luckyWords[idx];
-        }
+        let goods = JSON.parse(localStorage.getItem("goodsData")) || [];
 
-        function loadCSV() {
-            fetch('data.csv')
-                .then(res => res.text())
-                .then(text => {
-                    allData = text.trim().split('\n');
-                    renderData();
-                    const now = new Date().toLocaleString();
-                    document.getElementById('lastUpdate').textContent = now;
-                })
-                .catch(() => {
-                    document.getElementById('logArea').innerHTML = 
-                    '<div class="log-line" style="color:#ff6b6b;">⚠️ 读取数据失败，请检查data.csv文件</div>';
-                });
-        }
-
-        function renderData() {
-            let selPlatform = document.getElementById('platformSel').value;
-            let selType = document.getElementById('typeSel').value;
-            let area = document.getElementById('logArea');
-            area.innerHTML = '';
-
-            for(let i=1; i<allData.length; i++){
-                let arr = allData[i].split(',');
-                if(arr.length < 4) continue;
-
-                let p = arr[0];
-                let kind = arr[1];
-                let sales = arr[2];
-                let time = arr[3];
-
-                if(selPlatform !== 'ALL' && p !== selPlatform) continue;
-                if(selType !== 'ALL' && kind !== selType) continue;
-
-                let typeClass = 'type-photo';
-                if (kind === '线上签售') typeClass = 'type-online';
-                else if (kind === '线下签售') typeClass = 'type-offline';
-
-                let line = `
-                <div class="log-line">
-                    <span class="platform-tag">[${p}]</span>
-                    <span class="${typeClass}">${kind}</span>
-                    销量：<span class="sales-high">${sales}</span>
-                    记录时间：<span class="time-text">${time}</span>
+        function render(){
+            let pVal = document.getElementById("plat").value;
+            let tVal = document.getElementById("type").value;
+            let html = "";
+            goods.forEach(item=>{
+                if(pVal!="全部" && item.plat!=pVal) return;
+                if(tVal!="全部" && item.type!=tVal) return;
+                html += `
+                <div class="goods-item">
+                    <div class="platform">[${item.plat}]</div>
+                    <div class="${item.type=="线上签售"?"type-online":item.type=="线下签售"?"type-offline":"type-photo"}">${item.type}</div>
+                    <div><a href="${item.link}" target="_blank">打开商品链接</a></div>
                 </div>
                 `;
-                area.innerHTML += line;
-            }
+            });
+            document.getElementById("list").innerHTML = html||"<div style='text-align:center;color:#888;'>暂无商品</div>";
         }
 
-        function setRefresh() {
-            if(refreshTimer) clearInterval(refreshTimer);
-            let gap = parseInt(document.getElementById('refreshSel').value);
-            refreshTimer = setInterval(loadCSV, gap);
+        document.getElementById("plat").onchange = render;
+        document.getElementById("type").onchange = render;
+
+        let timer;
+        function setRefresh(){
+            clearInterval(timer);
+            let t = parseInt(document.getElementById("refresh").value);
+            timer = setInterval(()=>{
+                goods = JSON.parse(localStorage.getItem("goodsData")) || [];
+                render();
+            },t);
         }
+        document.getElementById("refresh").onchange = setRefresh;
 
-        document.getElementById('platformSel').addEventListener('change', renderData);
-        document.getElementById('typeSel').addEventListener('change', renderData);
-        document.getElementById('refreshSel').addEventListener('change', setRefresh);
-
-        setLuckySlogan();
-        loadCSV();
+        render();
         setRefresh();
     </script>
-</body>
-</html>
 </body>
 </html>
