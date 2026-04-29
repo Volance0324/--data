@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>管理员后台 - 文档表格上传管理</title>
+    <title>管理员后台 - 权限管理</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -44,9 +44,12 @@
             border-radius:8px;
             margin:15px 0;
         }
-        input[type="file"]{
+        input[type="file"], input[type="password"]{
             width:100%;
-            padding:8px;
+            padding:10px;
+            margin:8px 0;
+            border:1px solid var(--color-border);
+            border-radius:6px;
         }
         button {
             background: var(--color-btn);
@@ -56,7 +59,7 @@
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
-            margin:5px 0;
+            margin:5px;
         }
         button:hover {
             background: var(--color-btn-hover);
@@ -73,12 +76,16 @@
         }
         .del {
             background: #c47c7c;
-            color: #fff;
-            border: none;
-            padding: 4px 8px;
-            font-size: 12px;
-            border-radius: 4px;
-            cursor: pointer;
+            font-size:12px;
+            padding:4px 8px;
+            border-radius:4px;
+            margin-top:8px;
+        }
+        .lock{
+            background: #e8a7b1;
+            font-size:12px;
+            padding:4px 8px;
+            border-radius:4px;
             margin-top:8px;
         }
         .tip{
@@ -87,112 +94,159 @@
             margin:10px 0;
             text-align:center;
         }
+        .lock-screen{
+            position:fixed;top:0;left:0;width:100%;height:100%;
+            background:var(--color-bg-main);
+            display:flex;align-items:center;justify-content:center;z-index:9999;
+        }
+        .lock-box{
+            background:var(--color-bg-card);padding:30px;border-radius:12px;text-align:center;width:300px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h3>管理员 - 表格/图片上传导入</h3>
 
-        <div class="upload-box">
-            <input type="file" id="fileUpload" accept=".xlsx,.xls,.jpg,.png,.jpeg">
-            <div class="tip">支持Excel表格 / 图片上传<br>表格格式：团体、平台、类型</div>
-            <button onclick="handleUpload()">解析并导入</button>
-        </div>
+<div class="lock-screen" id="lockScreen">
+    <div class="lock-box">
+        <h3>🔒 管理员登录</h3>
+        <input type="password" id="pwd" placeholder="输入管理员密码">
+        <button onclick="login()">登录</button>
+    </div>
+</div>
 
-        <div class="list" id="list"></div>
+<div class="container" id="main" style="display:none;">
+    <h3>📂 文件上传 & 权限管理</h3>
+    <div class="upload-box">
+        <input type="file" id="file" accept=".xlsx,.xls,.log,.txt,.png,.jpg,.jpeg">
+        <div class="tip">支持：Excel / log / txt / 图片</div>
+        <button onclick="upload()">解析并导入</button>
     </div>
 
-    <script>
-        const KEY = "goodsData";
-        // 获取数据
-        function getData(){
-            return JSON.parse(localStorage.getItem(KEY)||"[]");
-        }
-        // 保存数据
-        function save(arr){
-            localStorage.setItem(KEY,JSON.stringify(arr));
-            renderList();
-        }
+    <div class="list" id="list"></div>
+</div>
 
-        // 上传处理
-        function handleUpload(){
-            let file = document.getElementById("fileUpload").files[0];
-            if(!file){
-                alert("请先选择文件");
-                return;
-            }
-            let name = file.name;
-            // 图片直接存
-            if(name.match(/jpg|png|jpeg/i)){
-                let reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = function(e){
-                    let arr = getData();
-                    arr.push({
-                        team:"图片素材",
-                        plat:"图片",
-                        type:"图片",
-                        img:e.target.result
-                    });
-                    save(arr);
-                    alert("图片上传成功，前端已更新");
-                }
-                return;
-            }
-            // Excel解析
-            if(name.match(/xlsx|xls/i)){
-                let reader = new FileReader();
-                reader.readAsArrayBuffer(file);
-                reader.onload = function(e){
-                    let data = new Uint8Array(e.target.result);
-                    let workbook = XLSX.read(data,{type:"array"});
-                    let sheet = workbook.Sheets[workbook.SheetNames[0]];
-                    let json = XLSX.utils.sheet_to_json(sheet);
-                    
-                    let arr = getData();
-                    json.forEach(item=>{
-                        arr.push({
-                            team:item.团体||"未知团体",
-                            plat:item.平台||"未知平台",
-                            type:item.类型||"未知类型",
-                        });
-                    });
-                    save(arr);
-                    alert("表格解析导入成功！共导入"+json.length+"条");
-                }
-            }
-        }
+<script>
+// ========== 管理员密码 ==========
+const ADMIN_PASS = "admin123";
+// ========== 内容查看密码（给客户的） ==========
+const CONTENT_PASS = "123456";
 
-        // 渲染列表
-        function renderList(){
+const KEY = "goodsData";
+
+function getData(){
+    return JSON.parse(localStorage.getItem(KEY)||"[]");
+}
+function save(d){
+    localStorage.setItem(KEY,JSON.stringify(d));
+    render();
+}
+
+function login(){
+    let v = document.getElementById("pwd").value;
+    if(v === ADMIN_PASS){
+        document.getElementById("lockScreen").style.display = "none";
+        document.getElementById("main").style.display = "block";
+        render();
+    }else{
+        alert("密码错误");
+    }
+}
+
+function upload(){
+    let f = document.getElementById("file").files[0];
+    if(!f){alert("请选择文件");return}
+    let n = f.name;
+
+    if(n.match(/\.(jpg|png|jpeg)$/i)){
+        let r = new FileReader();
+        r.readAsDataURL(f);
+        r.onload = e=>{
             let d = getData();
-            let html = "";
-            if(d.length===0){
-                html = '<div class="tip">暂无数据</div>';
-            }else{
-                d.forEach((it,i)=>{
-                    html += `
-                    <div class="good">
-                        <div><strong>团体：</strong>${it.team}</div>
-                        <div><strong>平台：</strong>${it.plat}</div>
-                        <div><strong>类型：</strong>${it.type}</div>
-                        <button class="del" onclick="delItem(${i})">删除</button>
-                    </div>
-                    `;
-                });
-            }
-            document.getElementById("list").innerHTML = html;
-        }
-
-        // 删除单条
-        function delItem(i){
-            if(!confirm("确定删除？"))return;
-            let d = getData();
-            d.splice(i,1);
+            d.push({team:"图片",plat:"图片",type:"图片",lock:false});
             save(d);
+            alert("上传成功");
         }
+        return;
+    }
 
-        renderList();
-    </script>
+    if(n.match(/\.(xlsx|xls)$/i)){
+        let r = new FileReader();
+        r.readAsArrayBuffer(f);
+        r.onload = e=>{
+            let wb = XLSX.read(new Uint8Array(e.target.result),{type:"array"});
+            let data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+            let d = getData();
+            data.forEach(i=>{
+                d.push({
+                    team:i.团体||i.team||"未知",
+                    plat:i.平台||i.plat||"未知",
+                    type:i.类型||i.type||"线上签售",
+                    lock:false
+                });
+            });
+            save(d);
+            alert("导入成功："+data.length+"条");
+        }
+        return;
+    }
+
+    if(n.match(/\.(log|txt)$/i)){
+        let r = new FileReader();
+        r.readAsText(f);
+        r.onload = e=>{
+            let t = e.target.result;
+            let lines = t.split(/\r?\n/);
+            let d = getData();
+            let cnt = 0;
+            lines.forEach(line=>{
+                line = line.trim();
+                if(!line) return;
+                let m = line.match(/(\d{4}.*?\d{2}:\d{2}:\d{2}).*?\[(.+?)\].*?团体签售/);
+                if(m){
+                    d.push({
+                        team:"团体签售",
+                        plat:"日志",
+                        type:m[2]||"无变动",
+                        lock:false
+                    });
+                    cnt++;
+                }
+            });
+            save(d);
+            alert("日志解析成功："+cnt+"条");
+        }
+    }
+}
+
+function render(){
+    let d = getData();
+    let html = "";
+    d.forEach((it,i)=>{
+        html+=`
+        <div class="good">
+            <div>团体：${it.team}</div>
+            <div>平台：${it.plat}</div>
+            <div>类型：${it.type}</div>
+            <div>状态：${it.lock?"🔒 已上锁":"✅ 公开"}</div>
+            <button class="del" onclick="del(${i})">删除</button>
+            <button class="lock" onclick="toggleLock(${i})">${it.lock?"解锁":"上锁"}</button>
+        </div>`;
+    });
+    document.getElementById("list").innerHTML = html || '<div class="tip">暂无数据</div>';
+}
+
+function del(i){
+    if(!confirm("确定删除？"))return;
+    let d = getData();
+    d.splice(i,1);
+    save(d);
+}
+
+function toggleLock(i){
+    let d = getData();
+    d[i].lock = !d[i].lock;
+    save(d);
+}
+</script>
 </body>
 </html>
